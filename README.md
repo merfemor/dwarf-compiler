@@ -14,15 +14,20 @@ In the project directory, enter following commands to configure and build the pr
 cabal configure
 cabal build
 ```
-If build succeeds, dwarf-compiler will be in the `./dist/build/dwarf-compiler` directory. You can run it:
+If build succeeds, dwarf-compiler will be in the `./dist/build/dwsc` directory. You can run it:
 ```
-./dist/build/dwarf-compiler/dwarf-compiler
+./dist/build/dwsc/dwsc <source_file.dws>
 ```
+or just
+```
+cabal run <source_file.dws>
+```
+
 Also you can install dwarf-compiler into your `.cabal` directory:
 ```
 cabal install
 ```
 Now you can run dwarf-compiler from anywhere (assuming that you have `.cabal/bin` in your PATH):
 ```
-dwarf-compiler
+dwsc <source_file.dws>
 ```

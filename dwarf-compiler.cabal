@@ -46,7 +46,7 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 
-executable dwarf-compiler
+executable dwsc
   -- .hs or .lhs file containing the Main module.
   main-is:             Compiler.hs
   
