@@ -11,7 +11,6 @@ cd dwarf-compiler
 ```
 In the project directory, enter following commands to configure and build the project:
 ```
-cabal configure
 cabal build
 ```
 If build succeeds, dwarf-compiler will be in the `./dist/build/dwsc` directory. You can run it:
