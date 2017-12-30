@@ -4,10 +4,16 @@ module Parser where
 
 import Syntax
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import Data.Char(isSpace)
 import qualified Data.Map as Map
 import qualified Text.ParserCombinators.Parsec.Token as Token
+
+
+-- get key by value in Map
+lookupR :: Eq b => b -> Map.Map c b -> c
+lookupR v = fst . head . Map.assocs . (Map.filter (==v))
 
 
 lexer         = Token.makeTokenParser languageDef
@@ -60,14 +66,24 @@ numVar :: Parser NumExpression
 numVar = NumVar <$> double
 
 
-unaryOperationExpression :: Parser NumExpression
-unaryOperationExpression = do
-    op <- unaryOperation
-    spaces
-    ex <- numExpression
-    return $ UnaryExpression op ex
+unOp op = Prefix $ do
+    string (lookupR op unaryOperations)
+    return $ UnaryExpression op
 
 
-numExpression :: Parser NumExpression
-numExpression = numVar
-            <|> unaryOperationExpression
+binOp op = Infix (do
+    string (lookupR op binaryOperations)
+    return $ BinaryExpression op) AssocLeft
+
+
+operations = [[unOp Not, unOp Neg],
+              [binOp Mul, binOp Div],
+              [binOp Sum, binOp Sub],
+              [binOp L, binOp G, binOp GE, binOp LE],
+              [binOp Eq, binOp NotE],
+              [binOp And],
+              [binOp Or]]
+
+
+exprParser :: Parser NumExpression
+exprParser = buildExpressionParser operations numVar

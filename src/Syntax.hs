@@ -6,12 +6,12 @@ import qualified Data.Map as Map
 import qualified Text.ParserCombinators.Parsec.Token as Token
 
 
-data UnaryOperation = Not | Neg deriving Show
+data UnaryOperation = Not | Neg deriving (Show, Eq)
 
 unaryOperations :: Map.Map String UnaryOperation
 unaryOperations = Map.fromList [("not", Not), ("-", Neg)]
 
-data BinaryOperation = And | Or | Eq | G | L | GE | LE | NotE | Sum | Sub | Mul | Div deriving Show
+data BinaryOperation = And | Or | Eq | G | L | GE | LE | NotE | Sum | Sub | Mul | Div deriving (Show, Eq)
 
 binaryOperations :: Map.Map String BinaryOperation
 binaryOperations = Map.fromList [("and", And), ("or", Or),
@@ -32,7 +32,7 @@ data FunctionCall = FunctionCall { function :: Function, callArguments :: [Expre
 
 data NumExpression = NumVar Double
                      | UnaryExpression UnaryOperation NumExpression
-                     | BinaryExpression NumExpression BinaryOperation NumExpression
+                     | BinaryExpression BinaryOperation NumExpression NumExpression
                      | FCall FunctionCall
                      | VCall String
                      deriving Show
