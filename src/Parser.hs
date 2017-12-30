@@ -29,55 +29,29 @@ stringLiteral = Token.stringLiteral lexer --parses a literal string
 
 
 int :: Parser Int
-int = fromIntegral <$> (Token.integer lexer)
+int = fromIntegral <$> Token.integer lexer
 
 
 double :: Parser Double
 double = try float <|> fromIntegral <$> int
 
-{-
--- skips tabs and spaces
-tabsSpaces :: Parser ()
-tabsSpaces = skipMany $ oneOf "\t "
 
-
-varDefine :: Parser String
-varDefine = do
-   spaces
-   id <- identifier
-   spaces
-   char '='
-   spaces
-   return id
+mapValueBetweenSpaces m v = (spaces *> string (lookupR v m) <* spaces)
 
 
 oneOfKeys :: Map.Map String a -> Parser a
 oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
--}
 
 sepExpressions :: Parser [Expression]
 sepExpressions = commaSep expressionParser
 
 
 functionCall :: Parser FunctionCall
-functionCall = do
-    f <- identifier
-    a <- parens sepExpressions
-    return $ FunctionCall f a
+functionCall = FunctionCall <$> identifier <*> parens sepExpressions
 
+unOp op = Prefix $ UnaryExpression op <$ (mapValueBetweenSpaces unaryOperations op)
 
-unOp op = Prefix $ do
-    spaces
-    string (lookupR op unaryOperations)
-    spaces
-    return $ UnaryExpression op
-
-
-binOp op = Infix (do
-    spaces
-    string (lookupR op binaryOperations)
-    spaces
-    return $ BinaryExpression op) AssocLeft
+binOp op = Infix (BinaryExpression op <$ (mapValueBetweenSpaces binaryOperations op)) AssocLeft
 
 
 operations = [[unOp Not, unOp Neg],
@@ -99,3 +73,7 @@ subExpression = parens expressionParser
 
 expressionParser :: Parser Expression
 expressionParser = buildExpressionParser operations subExpression
+
+
+varDefinition :: Parser VariableDefinition
+varDefinition = Var <$> oneOfKeys builtInTypes <* spaces <*> identifier <* char '=' <* spaces <*> expressionParser

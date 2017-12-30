@@ -20,7 +20,7 @@ binaryOperations = Map.fromList [("and", And), ("or", Or),
 
 data Type = Int | Double | String deriving Show
 
-data Statement = Statement deriving Show
+builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]
 
 data Function = Function { funcName :: String
                          , arguments :: [(String, Type)]
@@ -28,7 +28,7 @@ data Function = Function { funcName :: String
                          , statementList :: [Statement]
                          } deriving Show
 
-data FunctionCall = FunctionCall { cFunctionName :: String, callArguments :: [Expression]} deriving Show
+data FunctionCall = FunctionCall String [Expression] deriving Show
 
 data Expression = SVar String
                 | NumVar Double
@@ -38,6 +38,13 @@ data Expression = SVar String
                 | VCall String
                 deriving Show
 
+
+data VariableDefinition = Var { varType :: Type
+                    , varName :: String
+                    , initialValue :: Expression
+                    } deriving Show
+
+data Statement = VarDef VariableDefinition deriving Show
 
 languageDef =
    emptyDef { Token.commentStart    = "/*"
