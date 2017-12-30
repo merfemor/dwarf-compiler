@@ -39,12 +39,16 @@ data Expression = SVar String
                 deriving Show
 
 
-data VariableDefinition = Var { varType :: Type
+data Var = Var { varType :: Type
                     , varName :: String
                     , initialValue :: Expression
                     } deriving Show
 
-data Statement = VarDef VariableDefinition deriving Show
+data Statement = VarDef Var deriving Show
+
+type ProgramTree = [Function]
+
+type FunctionBody = [Statement]
 
 languageDef =
    emptyDef { Token.commentStart    = "/*"
