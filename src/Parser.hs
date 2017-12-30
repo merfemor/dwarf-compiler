@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Parser where
+module Parser (programTree) where
 
 import Syntax
 import Text.ParserCombinators.Parsec
@@ -69,8 +69,11 @@ subExpression = parens expressionParser
 expressionParser :: Parser Expression
 expressionParser = buildExpressionParser operations subExpression
 
+builtInType :: Parser Type
+builtInType = oneOfKeys builtInTypes
+
 varDefinition :: Parser Var
-varDefinition = Var <$> oneOfKeys builtInTypes <* spaces <*> identifier <* char '=' <* spaces <*> expressionParser
+varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spaces <*> expressionParser
 
 statement :: Parser Statement
 statement = VarDef <$> varDefinition
@@ -78,8 +81,20 @@ statement = VarDef <$> varDefinition
 -- spacesEol :: Parser ()
 -- spacesEol = tabsSpaces <* endOfLine *> tabsSpaces
 
-functionBody :: Parser FunctionBody
-functionBody = sepBy1 statement semi -- TODO: make separation of statements by endOfLine
+statementList :: Parser [Statement]
+statementList = sepEndBy1 statement (spaces <* semi) -- TODO: make separation of statements by endOfLine
+
+voidableType :: Parser (Maybe Type)
+voidableType = Just <$> builtInType <|> Nothing <$ string "void"
+
+function :: Parser Function
+function = do
+    t <- voidableType
+    spaces
+    n <- identifier
+    args <- parens $ commaSep $ (,) <$> builtInType <* spaces <*> identifier
+    fb <- braces statementList
+    return $ Function t n args fb
 
 programTree :: Parser ProgramTree
-programTree = undefined
+programTree = many1 function

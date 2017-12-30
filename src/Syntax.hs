@@ -22,10 +22,10 @@ data Type = Int | Double | String deriving Show
 
 builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]
 
-data Function = Function { funcName :: String
-                         , arguments :: [(String, Type)]
-                         , returnType :: Maybe Type
-                         , statementList :: [Statement]
+data Function = Function { returnType :: Maybe Type
+                         , funcName :: String
+                         , arguments :: [(Type, String)]
+                         , functionBody :: FunctionBody
                          } deriving Show
 
 data FunctionCall = FunctionCall String [Expression] deriving Show

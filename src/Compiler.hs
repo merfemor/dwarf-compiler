@@ -1,6 +1,7 @@
 module Main where
 
 import Parser
+import Text.ParserCombinators.Parsec
 import System.Environment
 
 main :: IO ()
@@ -11,4 +12,7 @@ main = do
     else
         let file = head args in do
             content <- readFile file
-            putStrLn content
+            res <- case parse programTree "" content of
+                Left e  -> return $ show e
+                Right s -> return $ show s
+            putStrLn res
