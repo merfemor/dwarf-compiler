@@ -1,10 +1,14 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Parser where
 
 import Syntax
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Language
 import Data.Char(isSpace)
+import qualified Data.Map as Map
 import qualified Text.ParserCombinators.Parsec.Token as Token
+
 
 lexer         = Token.makeTokenParser languageDef
 
@@ -13,13 +17,17 @@ reserved      = Token.reserved      lexer -- parses a reserved name
 reservedOp    = Token.reservedOp    lexer -- parses an operator
 parens        = Token.parens        lexer -- parses surrounding parenthesis:
 braces        = Token.braces        lexer
-integer       = Token.integer       lexer -- parses an integer
 float         = Token.float         lexer -- parses a floating point value
 stringLiteral = Token.stringLiteral lexer --parses a literal string
 
 
+int :: Parser Int
+int = fromIntegral <$> (Token.integer lexer)
+
+
 double :: Parser Double
-double = try float <|> fromIntegral <$> integer
+double = try float <|> fromIntegral <$> int
+
 
 -- skips tabs and spaces
 tabsSpaces :: Parser ()
@@ -36,25 +44,30 @@ varDefine = do
    return id
 
 
-iVarParser :: Parser NamedVar
-iVarParser = do
-    reserved "int"
-    id <- varDefine
-    val <- integer
-    return $ NamedVar id (IVar $ fromInteger val)
+oneOfKeys :: Map.Map String a -> Parser a
+oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
 
 
-dVarParser :: Parser NamedVar
-dVarParser = do
-    reserved "double"
-    id <- varDefine
-    val <- double
-    return $ NamedVar id (DVar $ val)
+unaryOperation :: Parser UnaryOperation
+unaryOperation = oneOfKeys unaryOperations
 
 
-sVarParser :: Parser NamedVar
-sVarParser = do
-    reserved "string"
-    id <- varDefine
-    val <- stringLiteral
-    return $ NamedVar id (SVar $ val)
+binaryOperation :: Parser BinaryOperation
+binaryOperation = oneOfKeys binaryOperations
+
+
+numVar :: Parser NumExpression
+numVar = NumVar <$> double
+
+
+unaryOperationExpression :: Parser NumExpression
+unaryOperationExpression = do
+    op <- unaryOperation
+    spaces
+    ex <- numExpression
+    return $ UnaryExpression op ex
+
+
+numExpression :: Parser NumExpression
+numExpression = numVar
+            <|> unaryOperationExpression
