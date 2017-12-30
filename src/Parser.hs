@@ -23,6 +23,7 @@ reserved      = Token.reserved      lexer -- parses a reserved name
 reservedOp    = Token.reservedOp    lexer -- parses an operator
 parens        = Token.parens        lexer -- parses surrounding parenthesis:
 braces        = Token.braces        lexer
+commaSep      = Token.commaSep      lexer
 float         = Token.float         lexer -- parses a floating point value
 stringLiteral = Token.stringLiteral lexer --parses a literal string
 
@@ -34,7 +35,7 @@ int = fromIntegral <$> (Token.integer lexer)
 double :: Parser Double
 double = try float <|> fromIntegral <$> int
 
-
+{-
 -- skips tabs and spaces
 tabsSpaces :: Parser ()
 tabsSpaces = skipMany $ oneOf "\t "
@@ -52,27 +53,30 @@ varDefine = do
 
 oneOfKeys :: Map.Map String a -> Parser a
 oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
+-}
+
+sepExpressions :: Parser [Expression]
+sepExpressions = commaSep expressionParser
 
 
-unaryOperation :: Parser UnaryOperation
-unaryOperation = oneOfKeys unaryOperations
-
-
-binaryOperation :: Parser BinaryOperation
-binaryOperation = oneOfKeys binaryOperations
-
-
-numVar :: Parser NumExpression
-numVar = NumVar <$> double
+functionCall :: Parser FunctionCall
+functionCall = do
+    f <- identifier
+    a <- parens sepExpressions
+    return $ FunctionCall f a
 
 
 unOp op = Prefix $ do
+    spaces
     string (lookupR op unaryOperations)
+    spaces
     return $ UnaryExpression op
 
 
 binOp op = Infix (do
+    spaces
     string (lookupR op binaryOperations)
+    spaces
     return $ BinaryExpression op) AssocLeft
 
 
@@ -85,5 +89,13 @@ operations = [[unOp Not, unOp Neg],
               [binOp Or]]
 
 
-exprParser :: Parser NumExpression
-exprParser = buildExpressionParser operations numVar
+subExpression :: Parser Expression
+subExpression = parens expressionParser
+            <|> try (FCall  <$> functionCall)
+            <|> VCall  <$> identifier
+            <|> NumVar <$> double
+            <|> SVar   <$> stringLiteral
+
+
+expressionParser :: Parser Expression
+expressionParser = buildExpressionParser operations subExpression

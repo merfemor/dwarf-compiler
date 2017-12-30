@@ -28,17 +28,15 @@ data Function = Function { funcName :: String
                          , statementList :: [Statement]
                          } deriving Show
 
-data FunctionCall = FunctionCall { function :: Function, callArguments :: [Expression]} deriving Show
+data FunctionCall = FunctionCall { cFunctionName :: String, callArguments :: [Expression]} deriving Show
 
-data NumExpression = NumVar Double
-                     | UnaryExpression UnaryOperation NumExpression
-                     | BinaryExpression BinaryOperation NumExpression NumExpression
-                     | FCall FunctionCall
-                     | VCall String
-                     deriving Show
-
-data Expression = SVal String
-                  | NumExpression deriving Show
+data Expression = SVar String
+                | NumVar Double
+                | UnaryExpression UnaryOperation Expression
+                | BinaryExpression BinaryOperation Expression Expression
+                | FCall FunctionCall
+                | VCall String
+                deriving Show
 
 
 languageDef =
