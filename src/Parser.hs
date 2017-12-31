@@ -93,12 +93,21 @@ ifElse = do
     esl <- option [] (string "else" *> spaces *> braces statementList)
     return $ IfElse e sl esl
 
+whileLoop :: Parser Statement
+whileLoop = do
+    string "while"
+    spaces
+    e <- parens expression
+    sl <- braces statementList
+    return $ WhileLoop e sl
+
 statement :: Parser Statement
 statement = VarDef <$> varDefinition
         <|> varAssignment
         <|> FuncDef <$> function
         <|> Return <$> (string "return" *> spaces *> expression)
         <|> ifElse
+        <|> whileLoop
 
 statementList :: Parser [Statement]
 statementList = endBy1 statement lineSeparator -- TODO: make separation of statements by endOfLine
