@@ -41,9 +41,6 @@ mapValueBetweenSpaces m v = (spaces *> string (lookupR v m) <* spaces)
 oneOfKeys :: Map.Map String a -> Parser a
 oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
 
-sepExpressions :: Parser [Expression]
-sepExpressions = commaSep expressionParser
-
 functionCall :: Parser FunctionCall
 functionCall = FunctionCall <$> identifier <*> parens sepExpressions
 
@@ -60,23 +57,26 @@ operations = [[unOp Not, unOp Neg],
               [binOp Or]]
 
 subExpression :: Parser Expression
-subExpression = parens expressionParser
+subExpression = parens expression
             <|> try (FCall  <$> functionCall)
             <|> VCall  <$> identifier
             <|> NumVar <$> double
             <|> SVar   <$> stringLiteral
 
-expressionParser :: Parser Expression
-expressionParser = buildExpressionParser operations subExpression
+expression :: Parser Expression
+expression = buildExpressionParser operations subExpression
+
+sepExpressions :: Parser [Expression]
+sepExpressions = commaSep expression
 
 builtInType :: Parser Type
 builtInType = oneOfKeys builtInTypes
 
 varDefinition :: Parser Var
-varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spaces <*> expressionParser
+varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spaces <*> expression
 
 varAssignment :: Parser Statement
-varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expressionParser
+varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expression
 
 -- spacesEol :: Parser ()
 -- spacesEol = tabsSpaces <* endOfLine *> tabsSpaces
@@ -84,10 +84,21 @@ varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expressionPar
 lineSeparator :: Parser String
 lineSeparator = semi
 
+ifElse :: Parser Statement
+ifElse = do
+    string "if"
+    spaces
+    e <- parens expression
+    sl <- braces statementList
+    esl <- option [] (string "else" *> spaces *> braces statementList)
+    return $ IfElse e sl esl
+
 statement :: Parser Statement
 statement = VarDef <$> varDefinition
         <|> varAssignment
         <|> FuncDef <$> function
+        <|> Return <$> (string "return" *> spaces *> expression)
+        <|> ifElse
 
 statementList :: Parser [Statement]
 statementList = endBy1 statement lineSeparator -- TODO: make separation of statements by endOfLine

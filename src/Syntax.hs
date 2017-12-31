@@ -46,7 +46,10 @@ data Var = Var { varType :: Type
 
 data Statement = VarDef Var
                | VarAssign String Expression
-               | FuncDef Function deriving Show
+               | FuncDef Function
+               | WhileLoop Expression [Statement]
+               | IfElse Expression [Statement] [Statement]
+               | Return Expression deriving Show
 
 type ProgramTree = [Function]
 
