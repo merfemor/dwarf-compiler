@@ -1,0 +1,4 @@
+void main() {
+	int a = 666;
+	print(a + 13);
+}
