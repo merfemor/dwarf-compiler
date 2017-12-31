@@ -28,7 +28,7 @@ stringLiteral = Token.stringLiteral lexer -- parses a literal string
 
 
 int :: Parser Int
-int = read <$> many1 digit
+int = (read <$> many1 digit) <* spaces
 
 double :: Parser Double
 double = try float <|> fromIntegral <$> int
@@ -81,8 +81,11 @@ statement = VarDef <$> varDefinition
 -- spacesEol :: Parser ()
 -- spacesEol = tabsSpaces <* endOfLine *> tabsSpaces
 
+lineSeparator :: Parser ()
+lineSeparator = () <$ char ';'
+
 statementList :: Parser [Statement]
-statementList = sepEndBy1 statement (spaces <* semi) -- TODO: make separation of statements by endOfLine
+statementList = endBy1 statement lineSeparator -- TODO: make separation of statements by endOfLine
 
 voidableType :: Parser (Maybe Type)
 voidableType = Just <$> builtInType <|> Nothing <$ string "void"
