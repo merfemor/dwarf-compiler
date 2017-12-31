@@ -44,7 +44,9 @@ data Var = Var { varType :: Type
                     , initialValue :: Expression
                     } deriving Show
 
-data Statement = VarDef Var deriving Show
+data Statement = VarDef Var
+               | VarAssign String Expression
+               | FuncDef Function deriving Show
 
 type ProgramTree = [Function]
 

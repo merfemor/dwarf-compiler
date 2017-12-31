@@ -75,14 +75,19 @@ builtInType = oneOfKeys builtInTypes
 varDefinition :: Parser Var
 varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spaces <*> expressionParser
 
-statement :: Parser Statement
-statement = VarDef <$> varDefinition
+varAssignment :: Parser Statement
+varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expressionParser
 
 -- spacesEol :: Parser ()
 -- spacesEol = tabsSpaces <* endOfLine *> tabsSpaces
 
-lineSeparator :: Parser ()
-lineSeparator = () <$ char ';'
+lineSeparator :: Parser String
+lineSeparator = semi
+
+statement :: Parser Statement
+statement = VarDef <$> varDefinition
+        <|> varAssignment
+        <|> FuncDef <$> function
 
 statementList :: Parser [Statement]
 statementList = endBy1 statement lineSeparator -- TODO: make separation of statements by endOfLine
