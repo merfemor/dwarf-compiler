@@ -96,12 +96,13 @@ whileLoop = do
     return $ WhileLoop e sl
 
 statement :: Parser Statement
-statement = VarDef <$> varDefinition
-        <|> varAssignment
-        <|> FuncDef <$> function
+statement = try varAssignment
+        <|> try (FuncDef <$> function)
         <|> Return <$> (string "return" *> spaces *> optionMaybe expression)
-        <|> ifElse
+        <|> try ifElse
         <|> whileLoop
+        <|> VarDef <$> varDefinition
+        <|> FuncCall <$> functionCall
 
 statementList :: Parser [Statement]
 statementList = endBy1 statement spaces

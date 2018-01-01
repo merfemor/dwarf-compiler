@@ -49,7 +49,8 @@ data Statement = VarDef Var
                | FuncDef Function
                | WhileLoop Expression [Statement]
                | IfElse Expression [Statement] [Statement]
-               | Return (Maybe Expression) deriving Show
+               | Return (Maybe Expression)
+               | FuncCall FunctionCall deriving Show
 
 type ProgramTree = [Function]
 
@@ -65,17 +66,10 @@ languageDef =
                                       , "else"
                                       , "while"
                                       , "return"
-                                      , "or"
                                       , "int"
                                       , "double"
                                       , "string"
                                       , "void"
-                                      , "print"
-                                      {-
-                                        TODO: check if:
-                                         1. type names int, double, string, void here?
-                                         2. print here?
-                                      -}
                                       ]
             , Token.reservedOpNames = Map.keys binaryOperations ++ Map.keys unaryOperations
             }
