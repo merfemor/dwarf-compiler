@@ -4,9 +4,6 @@ module Parser (programTree) where
 import Syntax
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Expr
-import Text.Parsec.Char
-import Text.ParserCombinators.Parsec.Language
-import Data.Char(isSpace)
 import qualified Data.Map as Map
 import qualified Text.ParserCombinators.Parsec.Token as Token
 
@@ -17,12 +14,9 @@ lookupR v = fst . head . Map.assocs . (Map.filter (==v))
 lexer         = Token.makeTokenParser languageDef
 
 identifier    = Token.identifier    lexer -- parses an identifier
-reserved      = Token.reserved      lexer -- parses a reserved name
-reservedOp    = Token.reservedOp    lexer -- parses an operator
 parens        = Token.parens        lexer -- parses surrounding parenthesis:
 braces        = Token.braces        lexer
 commaSep      = Token.commaSep      lexer
-semi          = Token.semi          lexer -- parses ;
 float         = Token.float         lexer -- parses a floating point value
 stringLiteral = Token.stringLiteral lexer -- parses a literal string
 
@@ -33,9 +27,7 @@ int = (read <$> many1 digit) <* spaces
 double :: Parser Double
 double = try float <|> fromIntegral <$> int
 
-tabsSpaces :: Parser ()
-tabsSpaces = skipMany $ oneOf "\t "
-
+mapValueBetweenSpaces :: Eq a => Map.Map String a -> a -> Parser String
 mapValueBetweenSpaces m v = (spaces *> string (lookupR v m) <* spaces)
 
 oneOfKeys :: Map.Map String a -> Parser a
@@ -80,7 +72,7 @@ varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expression
 
 ifElse :: Parser Statement
 ifElse = do
-    string "if"
+    _ <- string "if"
     spaces
     e <- parens expression
     sl <- braces statementList
@@ -89,7 +81,7 @@ ifElse = do
 
 whileLoop :: Parser Statement
 whileLoop = do
-    string "while"
+    _ <- string "while"
     spaces
     e <- parens expression
     sl <- braces statementList

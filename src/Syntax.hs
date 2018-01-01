@@ -20,6 +20,7 @@ binaryOperations = Map.fromList [("and", And), ("or", Or),
 
 data Type = Int | Double | String deriving Show
 
+builtInTypes :: Map.Map String Type
 builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]
 
 data Function = Function { returnType :: Maybe Type
@@ -56,6 +57,7 @@ type ProgramTree = [Function]
 
 type FunctionBody = [Statement]
 
+languageDef :: LanguageDef a
 languageDef =
    emptyDef { Token.commentStart    = "/*"
             , Token.commentEnd      = "*/"
