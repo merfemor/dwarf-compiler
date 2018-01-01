@@ -49,7 +49,7 @@ data Statement = VarDef Var
                | FuncDef Function
                | WhileLoop Expression [Statement]
                | IfElse Expression [Statement] [Statement]
-               | Return Expression deriving Show
+               | Return (Maybe Expression) deriving Show
 
 type ProgramTree = [Function]
 

@@ -105,7 +105,7 @@ statement :: Parser Statement
 statement = VarDef <$> varDefinition
         <|> varAssignment
         <|> FuncDef <$> function
-        <|> Return <$> (string "return" *> spaces *> expression)
+        <|> Return <$> (string "return" *> spaces *> optionMaybe expression)
         <|> ifElse
         <|> whileLoop
 
