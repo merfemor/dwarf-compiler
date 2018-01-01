@@ -78,12 +78,6 @@ varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spac
 varAssignment :: Parser Statement
 varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expression
 
--- spacesEol :: Parser ()
--- spacesEol = tabsSpaces <* endOfLine *> tabsSpaces
-
-lineSeparator :: Parser String
-lineSeparator = semi
-
 ifElse :: Parser Statement
 ifElse = do
     string "if"
@@ -110,7 +104,7 @@ statement = VarDef <$> varDefinition
         <|> whileLoop
 
 statementList :: Parser [Statement]
-statementList = endBy1 statement lineSeparator -- TODO: make separation of statements by endOfLine
+statementList = endBy1 statement spaces
 
 voidableType :: Parser (Maybe Type)
 voidableType = Just <$> builtInType <|> Nothing <$ string "void"
