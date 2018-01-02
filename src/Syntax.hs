@@ -31,8 +31,9 @@ data Function = Function { returnType :: Maybe Type
 
 data FunctionCall = FunctionCall String [Expression] deriving Show
 
-data Expression = SVar String
-                | NumVar Double
+data Expression = SLit String
+                | ILit Int
+                | DLit Double
                 | UnaryExpression UnaryOperation Expression
                 | BinaryExpression BinaryOperation Expression Expression
                 | FCall FunctionCall

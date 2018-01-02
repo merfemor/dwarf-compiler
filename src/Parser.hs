@@ -20,12 +20,8 @@ commaSep      = Token.commaSep      lexer
 float         = Token.float         lexer -- parses a floating point value
 stringLiteral = Token.stringLiteral lexer -- parses a literal string
 
-
 int :: Parser Int
-int = (read <$> many1 digit) <* spaces
-
-double :: Parser Double
-double = try float <|> fromIntegral <$> int
+int = fromInteger <$> Token.integer lexer
 
 mapValueBetweenSpaces :: Eq a => Map.Map String a -> a -> Parser String
 mapValueBetweenSpaces m v = (spaces *> string (lookupR v m) <* spaces)
@@ -50,10 +46,11 @@ operations = [[unOp Not, unOp Neg],
 
 subExpression :: Parser Expression
 subExpression = parens expression
-            <|> try (FCall  <$> functionCall)
-            <|> VCall  <$> identifier
-            <|> NumVar <$> double
-            <|> SVar   <$> stringLiteral
+            <|> FCall <$> try functionCall
+            <|> VCall <$> identifier
+            <|> DLit  <$> try float
+            <|> ILit  <$> int
+            <|> SLit  <$> stringLiteral
 
 expression :: Parser Expression
 expression = buildExpressionParser operations subExpression
