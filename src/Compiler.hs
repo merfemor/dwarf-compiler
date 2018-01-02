@@ -12,7 +12,7 @@ main = do
     else
         let file = head args in do
             content <- readFile file
-            res <- case parse programTree "" content of
+            res <- case parse abstractProgramTree file content of
                 Left e  -> return $ show e
                 Right s -> return $ show s
             putStrLn res

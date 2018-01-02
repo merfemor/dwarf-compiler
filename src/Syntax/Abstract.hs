@@ -1,4 +1,4 @@
-module Syntax where
+module Syntax.Abstract where
 
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Language
@@ -54,7 +54,7 @@ data Statement = VarDef Var
                | Return (Maybe Expression)
                | FuncCall FunctionCall deriving Show
 
-type ProgramTree = [Function]
+type AbstractProgramTree = [Function]
 
 type FunctionBody = [Statement]
 

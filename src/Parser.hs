@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Parser (programTree) where
+module Parser (abstractProgramTree) where
 
-import Syntax
+import Syntax.Abstract
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Expr
 import qualified Data.Map as Map
@@ -108,5 +108,5 @@ function = do
     fb <- braces statementList
     return $ Function t n args fb
 
-programTree :: Parser ProgramTree
-programTree = many1 function
+abstractProgramTree :: Parser AbstractProgramTree
+abstractProgramTree = many1 function
