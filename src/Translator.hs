@@ -32,9 +32,9 @@ findVariable fs fid vn =
         Just vid -> Just $ VariableId fid vid True
         Nothing  -> case findIndex isV (localVars f) of
                          Just vid -> Just $ VariableId fid vid False
-                         Nothing  -> case outerFunctionId f of
-                                          Just ofid -> findVariable fs ofid vn
-                                          Nothing   -> Nothing
+                         Nothing  -> do
+                             ofid <- outerFunctionId f
+                             findVariable fs ofid vn
 
 -- TODO: test this algorithm
 findLocalFunction :: [T.Function] -> Id -> Id -> String -> Maybe Id
@@ -42,9 +42,9 @@ findLocalFunction fs iid to fn =
     let correctOutId = \f -> outerFunctionId f == Just iid in
     case findIndex (\f -> (T.funcName f == fn) && correctOutId f) (take to fs) of
          Just ffid -> Just ffid
-         Nothing   -> case outerFunctionId (fs !! iid) of
-                           Nothing   -> Nothing
-                           Just ofid -> findLocalFunction fs ofid to fn
+         Nothing   -> do
+             ofid <- outerFunctionId (fs !! iid)
+             findLocalFunction fs ofid to fn
 
 
 findFunction :: [T.Function] -> Id -> String -> Maybe Id
