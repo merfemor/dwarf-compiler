@@ -28,10 +28,8 @@ findVariable fs fid vn =
 -- TODO: test this algorithm
 findLocalFunction :: [T.Function] -> Id -> Id -> String -> Maybe Id
 findLocalFunction fs iid to fn = 
-    let correctName = \f -> T.funcName f == fn
-        correctOutId = \f -> outerFunctionId f == Just iid
-    in
-    case findIndex (\f -> correctName f && correctOutId f) (take to fs) of
+    let correctOutId = \f -> outerFunctionId f == Just iid in
+    case findIndex (\f -> (T.funcName f == fn) && correctOutId f) (take to fs) of
          Just ffid -> Just ffid
          Nothing   -> case outerFunctionId (fs !! iid) of
                            Nothing   -> Nothing
@@ -40,10 +38,8 @@ findLocalFunction fs iid to fn =
 
 findFunction :: [T.Function] -> Id -> String -> Maybe Id
 findFunction fs fid fn = 
-    let correctName = \f -> T.funcName f == fn
-        global = \f -> outerFunctionId f == Nothing
-    in
-    case findIndex (\f -> global f && correctName f) fs of
+    let global = \f -> outerFunctionId f == Nothing in
+    case findIndex (\f -> global f && (T.funcName f == fn)) fs of
          Just ffid -> Just ffid
          Nothing   -> findLocalFunction fs fid (length fs) fn
 
@@ -91,5 +87,25 @@ translateExpressions fid (ex:exs) s =
                                  Right (exs', s'') -> Right (ex' : exs', s'')
 
 
-abstractToTranslatable :: AbstractProgramTree -> TranslatableProgramTree
-abstractToTranslatable = undefined
+translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
+translateStatement = undefined
+
+
+translatateFunction :: Id -> TreeTransaltor A.Function T.Function
+translatateFunction = undefined
+
+
+makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
+makeGlobalFunctionSignatures [] s                              = Right ((), s)
+makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) = 
+    case find (\f -> A.funcName f == fn) fs of
+         Just _  -> Left $ DuplicateFunctionDefinition af
+         Nothing -> let tf = T.Function t fn [] [] Nothing [] in
+                    makeGlobalFunctionSignatures fs (sp, fp ++ [tf])
+
+
+abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
+abstractToTranslatable at = 
+    case makeGlobalFunctionSignatures at ([],[]) of
+         Left err      -> Left err
+         Right (_, tt) -> undefined

@@ -1,10 +1,10 @@
 module Syntax.Error where
 
-import Syntax.Abstract(Type)
+import Syntax.Abstract(Type, Function)
 
 data CompilationError = UndefinedVariable String 
                       | UndefinedFunction String
                       | DuplicateVariableDefinition String
-                      | DuplicateFunctionDefinition String
+                      | DuplicateFunctionDefinition Function
                       | TypeMismatch { expectedType :: Type, actualType :: Type } 
                       | BadArgumentNumber String deriving Show
