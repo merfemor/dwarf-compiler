@@ -12,6 +12,16 @@ insertAndGetId :: [a] -> a -> (Int, [a])
 insertAndGetId l e = (length l, l ++ [e])
 
 
+translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
+translateMany z []       s = Right ([], s)
+translateMany z (ex:exs) s = 
+    case z ex s of
+         Left err        -> Left err
+         Right (ex', s') -> case translateMany z exs s' of
+                                 Left err          -> Left err
+                                 Right (exs', s'') -> Right (ex' : exs', s'')
+
+
 findVariable :: [T.Function] -> Id -> String -> Maybe VariableId
 findVariable fs fid vn = 
     let isV = \v -> T.varName v == vn
@@ -71,27 +81,18 @@ translateExpression fid (A.VCall v) s@(_, fp) =
 translateExpression fid (A.FCall (FunctionCall fn exs)) s@(_, fp) = 
     case findFunction fp fid fn of 
          Nothing   -> Left $ UndefinedFunction fn
-         Just ffid -> case translateExpressions fid exs s of
+         Just ffid -> case translateMany (translateExpression fid) exs s of
                            Left err         -> Left err
                            Right (exs', s') -> Right (T.FCall ffid exs', s')
-
-
-translateExpressions :: Id -> TreeTransaltor [A.Expression] [T.Expression]
-translateExpressions _   []       s = Right ([], s)
-translateExpressions fid (ex:exs) s = 
-    case translateExpression fid ex s of
-         Left err        -> Left err
-         Right (ex', s') -> case translateExpressions fid exs s' of
-                                 Left err          -> Left err
-                                 Right (exs', s'') -> Right (ex' : exs', s'')
+                                 
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
 translateStatement = undefined
 
 
-translatateFunction :: Id -> TreeTransaltor A.Function T.Function
-translatateFunction = undefined
+translateGlobalFunction :: TreeTransaltor A.Function T.Function
+translateGlobalFunction = undefined
 
 
 makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
@@ -107,4 +108,6 @@ abstractToTranslatable :: AbstractProgramTree -> Either CompilationError Transla
 abstractToTranslatable at = 
     case makeGlobalFunctionSignatures at ([],[]) of
          Left err      -> Left err
-         Right (_, tt) -> undefined
+         Right (_, tt) -> case translateMany translateGlobalFunction at tt of
+                               Left err       -> Left err
+                               Right (_, tt') -> Right tt'
