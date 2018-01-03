@@ -1,0 +1,7 @@
+void main() {
+	print("in first main")
+}
+
+void main() {
+    print("in second main")
+}
