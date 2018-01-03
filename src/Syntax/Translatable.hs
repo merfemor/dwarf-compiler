@@ -1,7 +1,6 @@
 module Syntax.Translatable where
 
 import Syntax.Abstract (UnaryOperation, BinaryOperation, Type)
-import qualified Data.Map as Map
 
 data Var = Var { varType :: Type, varName :: String } deriving Show
 

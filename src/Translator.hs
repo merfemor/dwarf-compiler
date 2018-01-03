@@ -1,9 +1,8 @@
-module Translator where
+module Translator(abstractToTranslatable) where
 
 import Syntax.Translatable as T
 import Syntax.Abstract     as A
 import Syntax.Error
-import Control.Monad.State.Lazy
 import Data.List
 
 type TreeTransaltor a b = a -> TranslatableProgramTree -> Either CompilationError (b, TranslatableProgramTree)
@@ -64,12 +63,12 @@ translateExpression fid (A.BinaryExpression op e1 e2) s =
                                 Right (e2', s'') -> Right (T.BinaryExpression op e1' e2', s'')
                                 Left err         -> Left err
 
-translateExpression fid (A.VCall v) s@(sp, fp) =
+translateExpression fid (A.VCall v) s@(_, fp) =
     case findVariable fp fid v of
          Nothing  -> Left $ UndefinedVariable v
          Just vid -> Right (T.VCall vid, s)
 
-translateExpression fid (A.FCall (FunctionCall fn exs)) s@(sp, fp) = 
+translateExpression fid (A.FCall (FunctionCall fn exs)) s@(_, fp) = 
     case findFunction fp fid fn of 
          Nothing   -> Left $ UndefinedFunction fn
          Just ffid -> case translateExpressions fid exs s of

@@ -1,6 +1,7 @@
 module Main where
 
 import Parser
+import Translator
 import Text.ParserCombinators.Parsec
 import System.Environment
 
@@ -12,7 +13,10 @@ main = do
     else
         let file = head args in do
             content <- readFile file
-            res <- case parse abstractProgramTree file content of
-                Left e  -> return $ show e
-                Right s -> return $ show s
-            putStrLn res
+            case parse abstractProgramTree file content of
+                Left e    -> putStrLn $ show e
+                Right res -> do
+                    putStrLn $ show res ++ "\n\n"
+                    case abstractToTranslatable res of
+                        Left e     -> putStrLn $ show e
+                        Right trtd -> putStrLn $ show trtd
