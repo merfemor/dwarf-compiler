@@ -27,7 +27,13 @@ findVariable fs fid vn =
 
 
 findFunction :: [T.Function] -> Id -> String -> Maybe Id
-findFunction = undefined
+findFunction fs fid fn = 
+    let correctName = \f -> T.funcName f == fn
+        global = \f -> outerFunctionId f == Nothing
+    in
+    case findIndex (\f -> global f && correctName f) fs of
+         Just ffid -> Just ffid
+         Nothing   -> undefined
 
 
 -- context function id -> translator
@@ -52,10 +58,25 @@ translateExpression fid (A.BinaryExpression op e1 e2) s =
 
 translateExpression fid (A.VCall v) s@(sp, fp) =
     case findVariable fp fid v of
-         Nothing -> Left $ UndefinedVariable v
+         Nothing  -> Left $ UndefinedVariable v
          Just vid -> Right (T.VCall vid, s)
 
-translateExpression fid (A.FCall (FunctionCall fn exs)) s = undefined
+translateExpression fid (A.FCall (FunctionCall fn exs)) s@(sp, fp) = 
+    case findFunction fp fid fn of 
+         Nothing   -> Left $ UndefinedFunction fn
+         Just ffid -> case translateExpressions fid exs s of
+                           Left err         -> Left err
+                           Right (exs', s') -> Right (T.FCall ffid exs', s')
+
+
+translateExpressions :: Id -> TreeTransaltor [A.Expression] [T.Expression]
+translateExpressions _   []       s = Right ([], s)
+translateExpressions fid (ex:exs) s = 
+    case translateExpression fid ex s of
+         Left err        -> Left err
+         Right (ex', s') -> case translateExpressions fid exs s' of
+                                 Left err          -> Left err
+                                 Right (exs', s'') -> Right (ex' : exs', s'')
 
 
 abstractToTranslatable :: AbstractProgramTree -> TranslatableProgramTree
