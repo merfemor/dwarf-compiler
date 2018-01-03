@@ -17,13 +17,11 @@ setFunctionBody = undefined
 
 
 translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
-translateMany z []       s = Right ([], s)
-translateMany z (ex:exs) s = 
-    case z ex s of
-         Left err        -> Left err
-         Right (ex', s') -> case translateMany z exs s' of
-                                 Left err          -> Left err
-                                 Right (exs', s'') -> Right (ex' : exs', s'')
+translateMany f []       s = Right ([], s)
+translateMany f (x:xs) s = do
+    (x', s') <- f x s 
+    (xs', s'') <- translateMany f xs s'
+    return $ (x' : xs', s'')
 
 
 findVariable :: [T.Function] -> Id -> String -> Maybe VariableId
@@ -65,17 +63,14 @@ translateExpression _ (A.SLit sl) (sp, fp) =
     let (sid, sp') = insertAndGetId sp sl in 
         Right (T.SLit sid, (sp', fp))
 
-translateExpression fid (A.UnaryExpression op e) s = 
-    case translateExpression fid e s of
-        Right (e', s') -> Right (T.UnaryExpression op e', s')
-        Left err       -> Left err
+translateExpression fid (A.UnaryExpression op e) s = do
+    (e', s') <- translateExpression fid e s
+    return (T.UnaryExpression op e', s')
 
-translateExpression fid (A.BinaryExpression op e1 e2) s =
-    case translateExpression fid e1 s of
-        Left err        -> Left err
-        Right (e1', s') -> case translateExpression fid e2 s' of
-                                Right (e2', s'') -> Right (T.BinaryExpression op e1' e2', s'')
-                                Left err         -> Left err
+translateExpression fid (A.BinaryExpression op e1 e2) s = do
+    (e1', s') <- translateExpression fid e1 s
+    (e2', s'') <- translateExpression fid e2 s'
+    return (T.BinaryExpression op e1' e2', s'')
 
 translateExpression fid (A.VCall v) s@(_, fp) =
     case findVariable fp fid v of
@@ -85,34 +80,35 @@ translateExpression fid (A.VCall v) s@(_, fp) =
 translateExpression fid (A.FCall (FunctionCall fn exs)) s@(_, fp) = 
     case findFunction fp fid fn of 
          Nothing   -> Left $ UndefinedFunction fn
-         Just ffid -> case translateMany (translateExpression fid) exs s of
-                           Left err         -> Left err
-                           Right (exs', s') -> Right (T.FCall ffid exs', s')
-                                 
+         Just ffid -> do
+             (exs', s') <- translateMany (translateExpression fid) exs s 
+             return (T.FCall ffid exs', s')
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
-translateStatement = undefined
+translateStatement fid (FuncCall (FunctionCall n es)) (sp,fp) = 
+    if isStandartFunction n then 
+        undefined
+    else case findFunction fp fid n of
+            Nothing   -> Left $ UndefinedFunction n
+            Just ffid -> undefined
 
 
 translateGlobalFunction :: TreeTransaltor A.Function ()
 translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
     let f = T.Function t n [] args (Just fid) []
-        Just fid = findIndex (\f -> T.funcName f == n) fp in
-    case translateMany (translateStatement fid) ss s of
-         Left err        -> Left err
-         Right (ss', (sp,fp')) -> 
-            let fp'' = setFunctionBody fp' fid ss' in 
-            Right ((), (sp, fp''))
+        Just fid = findIndex (\f -> T.funcName f == n) fp 
+    in do
+        (ss', (sp,fp')) <- translateMany (translateStatement fid) ss s
+        return ((), (sp, setFunctionBody fp' fid ss'))
 
 
 translateFunction :: Id -> TreeTransaltor A.Function ()
 translateFunction fid (A.Function t n args ss) s@(sp,fp) = 
     let f = T.Function t n [] args (Just fid) []
-        (nfid,fp') = insertAndGetId fp f in
-    case translateMany (translateStatement nfid) ss (sp, fp') of
-         Left err        -> Left err
-         Right (ss', s') -> undefined
+        (nfid,fp') = insertAndGetId fp f in do
+    (ss', s') <- translateMany (translateStatement nfid) ss (sp, fp')
+    return undefined
 
          
 makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
@@ -125,9 +121,7 @@ makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) =
 
 
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
-abstractToTranslatable at = 
-    case makeGlobalFunctionSignatures at ([],[]) of
-         Left err      -> Left err
-         Right (_, tt) -> case translateMany translateGlobalFunction at tt of
-                               Left err       -> Left err
-                               Right (_, tt') -> Right tt'
+abstractToTranslatable t = do
+    (_, tt) <- makeGlobalFunctionSignatures t ([],[])
+    (_, tt') <- translateMany translateGlobalFunction t tt
+    return tt'

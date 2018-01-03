@@ -1,6 +1,15 @@
 module Syntax.Translatable where
 
-import Syntax.Abstract (UnaryOperation, BinaryOperation, Type, Var)
+import Syntax.Abstract ( UnaryOperation
+                       , BinaryOperation
+                       , Type
+                       , Type(Int)
+                       , Type(Double)
+                       , Type(String)
+                       , Var
+                       , Var(Var)
+                       )
+import Data.List(findIndex)
 
 type Id = Int
 
@@ -34,3 +43,15 @@ data Statement = VarAssign VariableId  Expression
 
 -- string pool and function list
 type TranslatableProgramTree = ([String], [Function])
+
+
+standartFunctions :: [Function]
+standartFunctions = [ Function Nothing       "print"    [] [Var String ""] Nothing []
+                    , Function Nothing       "print"    [] [Var Int    ""] Nothing []
+                    , Function Nothing       "print"    [] [Var Double ""] Nothing []
+                    , Function (Just Int)    "toInt"    [] [Var Double ""] Nothing []
+                    , Function (Just Double) "toDouble" [] [Var Int    ""] Nothing []
+                    ]
+                    
+isStandartFunction :: String -> Bool
+isStandartFunction n = Nothing /= findIndex (\f -> funcName f == n) standartFunctions
