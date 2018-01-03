@@ -62,7 +62,7 @@ builtInType :: Parser Type
 builtInType = oneOfKeys builtInTypes
 
 varDefinition :: Parser Var
-varDefinition = Var <$> builtInType <* spaces <*> identifier <* char '=' <* spaces <*> expression
+varDefinition = Var <$> builtInType <* spaces <*> identifier
 
 varAssignment :: Parser Statement
 varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expression
@@ -90,7 +90,7 @@ statement = try varAssignment
         <|> Return <$> (string "return" *> spaces *> optionMaybe expression)
         <|> try ifElse
         <|> whileLoop
-        <|> VarDef <$> varDefinition
+        <|> VarDef <$> varDefinition <* char '=' <* spaces <*> expression
         <|> FuncCall <$> functionCall
 
 statementList :: Parser [Statement]
@@ -104,7 +104,7 @@ function = do
     t <- voidableType
     spaces
     n <- identifier
-    args <- parens $ commaSep $ (,) <$> builtInType <* spaces <*> identifier
+    args <- parens $ commaSep $ Var <$> builtInType <* spaces <*> identifier
     fb <- braces statementList
     return $ Function t n args fb
 

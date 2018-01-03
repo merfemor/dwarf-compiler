@@ -24,7 +24,7 @@ translateMany z (ex:exs) s =
 
 findVariable :: [T.Function] -> Id -> String -> Maybe VariableId
 findVariable fs fid vn = 
-    let isV = \v -> T.varName v == vn
+    let isV = \v -> varName v == vn
         f   = fs !! fid in
     case findIndex isV (T.arguments f) of
         Just vid -> Just $ VariableId fid vid True
@@ -92,9 +92,23 @@ translateStatement = undefined
 
 
 translateGlobalFunction :: TreeTransaltor A.Function T.Function
-translateGlobalFunction = undefined
+translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
+    let f = T.Function t n [] undefined (Just fid) []
+        Just fid = findIndex (\f -> T.funcName f == n) fp in
+    case translateMany (translateStatement fid) ss s of
+         Left err        -> Left err
+         Right (ss', s') -> undefined
 
 
+translateFunction :: Id -> TreeTransaltor A.Function T.Function
+translateFunction fid (A.Function t n args ss) s@(sp,fp) = 
+    let f = T.Function t n [] undefined (Just fid) []
+        (nfid,fp') = insertAndGetId fp f in
+    case translateMany (translateStatement nfid) ss (sp, fp') of
+         Left err        -> Left err
+         Right (ss', s') -> undefined
+
+         
 makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
 makeGlobalFunctionSignatures [] s                              = Right ((), s)
 makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) = 

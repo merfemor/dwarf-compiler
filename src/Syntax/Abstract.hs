@@ -23,9 +23,11 @@ data Type = Int | Double | String deriving Show
 builtInTypes :: Map.Map String Type
 builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]
 
+data Var = Var { varType :: Type, varName :: String } deriving Show
+
 data Function = Function { returnType :: Maybe Type
                          , funcName :: String
-                         , arguments :: [(Type, String)]
+                         , arguments :: [Var]
                          , functionBody :: FunctionBody
                          } deriving Show
 
@@ -40,13 +42,7 @@ data Expression = SLit String
                 | VCall String
                 deriving Show
 
-
-data Var = Var { varType :: Type
-                    , varName :: String
-                    , initialValue :: Expression
-                    } deriving Show
-
-data Statement = VarDef Var
+data Statement = VarDef Var Expression
                | VarAssign String Expression
                | FuncDef Function
                | WhileLoop Expression [Statement]

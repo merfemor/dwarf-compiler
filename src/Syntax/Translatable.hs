@@ -1,8 +1,6 @@
 module Syntax.Translatable where
 
-import Syntax.Abstract (UnaryOperation, BinaryOperation, Type)
-
-data Var = Var { varType :: Type, varName :: String } deriving Show
+import Syntax.Abstract (UnaryOperation, BinaryOperation, Type, Var)
 
 type Id = Int
 
