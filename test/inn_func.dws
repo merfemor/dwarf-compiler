@@ -1,0 +1,32 @@
+void main() {
+    void a() {
+        print("in main.a\n")
+        void b() {
+            print("in main.a.b\n")
+        }
+    }
+    
+    void b() {
+        print("in main.b\n")
+        void c() {
+            print("in main.b.c\n")
+            print("call a\n")
+            a()
+        }
+        
+        void bb() {
+            print("in main.bb\n")
+        }
+        
+        print("call bb\n")
+        bb()
+    }
+    
+    void c() {
+        print("in main.c")
+    }
+    
+    bb() // will not compile
+}
+    
+    
