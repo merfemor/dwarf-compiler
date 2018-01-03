@@ -25,6 +25,18 @@ findVariable fs fid vn =
                                           Just ofid -> findVariable fs ofid vn
                                           Nothing   -> Nothing
 
+-- TODO: test this algorithm
+findLocalFunction :: [T.Function] -> Id -> Id -> String -> Maybe Id
+findLocalFunction fs iid to fn = 
+    let correctName = \f -> T.funcName f == fn
+        correctOutId = \f -> outerFunctionId f == Just iid
+    in
+    case findIndex (\f -> correctName f && correctOutId f) (take to fs) of
+         Just ffid -> Just ffid
+         Nothing   -> case outerFunctionId (fs !! iid) of
+                           Nothing   -> Nothing
+                           Just ofid -> findLocalFunction fs ofid to fn
+
 
 findFunction :: [T.Function] -> Id -> String -> Maybe Id
 findFunction fs fid fn = 
@@ -33,7 +45,7 @@ findFunction fs fid fn =
     in
     case findIndex (\f -> global f && correctName f) fs of
          Just ffid -> Just ffid
-         Nothing   -> undefined
+         Nothing   -> findLocalFunction fs fid (length fs) fn
 
 
 -- context function id -> translator
