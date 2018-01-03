@@ -12,6 +12,10 @@ insertAndGetId :: [a] -> a -> (Int, [a])
 insertAndGetId l e = (length l, l ++ [e])
 
 
+setFunctionBody :: [T.Function] -> Id -> [T.Statement] -> [T.Function]
+setFunctionBody = undefined
+
+
 translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
 translateMany z []       s = Right ([], s)
 translateMany z (ex:exs) s = 
@@ -91,18 +95,20 @@ translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
 translateStatement = undefined
 
 
-translateGlobalFunction :: TreeTransaltor A.Function T.Function
+translateGlobalFunction :: TreeTransaltor A.Function ()
 translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
-    let f = T.Function t n [] undefined (Just fid) []
+    let f = T.Function t n [] args (Just fid) []
         Just fid = findIndex (\f -> T.funcName f == n) fp in
     case translateMany (translateStatement fid) ss s of
          Left err        -> Left err
-         Right (ss', s') -> undefined
+         Right (ss', (sp,fp')) -> 
+            let fp'' = setFunctionBody fp' fid ss' in 
+            Right ((), (sp, fp''))
 
 
-translateFunction :: Id -> TreeTransaltor A.Function T.Function
+translateFunction :: Id -> TreeTransaltor A.Function ()
 translateFunction fid (A.Function t n args ss) s@(sp,fp) = 
-    let f = T.Function t n [] undefined (Just fid) []
+    let f = T.Function t n [] args (Just fid) []
         (nfid,fp') = insertAndGetId fp f in
     case translateMany (translateStatement nfid) ss (sp, fp') of
          Left err        -> Left err
