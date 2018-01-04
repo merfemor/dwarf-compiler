@@ -99,6 +99,22 @@ translateStatement fid (A.FuncCall (FunctionCall n es)) s@(_,fp) =
              (es', s') <- translateMany (translateExpression fid) es s
              return (T.FuncCall ffid es', s')
 
+translateStatement fid (A.WhileLoop ex ss) s = do
+    (ex', s') <- translateExpression fid ex s
+    (ss', s'') <- translateMany (translateStatement fid) ss s'
+    return (T.WhileLoop ex' ss', s'')
+    
+translateStatement fid (A.IfElse ex iss ess) s = do
+    (ex', s') <- translateExpression fid ex s
+    (iss', s'') <- translateMany (translateStatement fid) iss s'
+    (ess', s''') <- translateMany (translateStatement fid) ess s''
+    return (T.IfElse ex' iss' ess', s''')
+    
+translateStatement _ (A.Return Nothing) s = Right (T.Return Nothing, s)
+translateStatement fid (A.Return (Just ex)) s = do
+    (ex', s') <- translateExpression fid ex s
+    return (T.Return (Just ex'), s')
+-- TODO: add VarDef Var Expression, VarAssign String Expression, FuncDef Function parsing
 
 translateGlobalFunction :: TreeTransaltor A.Function ()
 translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
