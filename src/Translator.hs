@@ -4,6 +4,7 @@ import Syntax.Translatable as T
 import Syntax.Abstract     as A
 import Syntax.Error
 import Data.List
+import TypeChecker
 
 type TreeTransaltor a b = a -> TranslatableProgramTree -> Either CompilationError (b, TranslatableProgramTree)
 
@@ -180,5 +181,7 @@ makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) =
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
 abstractToTranslatable t = do
     (_, tt) <- makeGlobalFunctionSignatures t ([], standartFunctions)
-    (_, tt') <- translateMany translateGlobalFunction t tt
-    return tt'
+    (_, tt'@(sp,fp)) <- translateMany translateGlobalFunction t tt
+    case checkFunctionsTypeErrors fp of
+         Nothing -> Right tt'
+         Just e  -> Left e
