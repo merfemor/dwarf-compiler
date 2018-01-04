@@ -1,0 +1,10 @@
+void main() {
+    void a() {
+        print("in main.a\n")
+        void b() {
+            print("in main.a.b\n")
+        }
+    }
+    a() // it's OK
+    b() // will not compile
+}

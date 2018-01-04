@@ -1,0 +1,9 @@
+void main() {
+    b() // will not compile
+    
+    void b() {
+        print("defined later")
+    }
+    
+    b() // OK
+}
