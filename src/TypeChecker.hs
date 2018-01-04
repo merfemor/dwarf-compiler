@@ -7,11 +7,16 @@ import Syntax.Error
 type CheckResult = Either CompilationError ()
 
 
-checkFunction :: Function -> [Function] -> CheckResult
-checkFunction fs f = undefined
+checkMany :: (a -> [Function] -> CheckResult) -> [a] -> [Function] -> CheckResult
+checkMany _ []     _   = Right ()
+checkMany f (x:xs) fns = f x fns >> checkMany f xs fns
+
+
+checkStatement :: Statement -> [Function] -> CheckResult
+checkStatement = undefined
 
 
 checkFunctionsTypeErrors :: [Function] -> CheckResult
 checkFunctionsTypeErrors fs = helper fs fs where
     helper []     _   = Right ()
-    helper (f:fs) afs = checkFunction f afs >> helper fs afs
+    helper (f:fs) afs = (checkMany checkStatement) (functionBody f) afs >> helper fs afs 
