@@ -39,7 +39,7 @@ translateMany f (x:xs) s = do
 
 findVariable :: [T.Function] -> Id -> String -> Maybe VariableId
 findVariable fs fid vn = 
-    let isV = \v -> varName v == vn
+    let isV = (== vn) . varName 
         f   = fs !! fid in
     case findIndex isV (T.arguments f) of
         Just vid -> Just $ VariableId fid vid True
@@ -49,7 +49,7 @@ findVariable fs fid vn =
                              ofid <- outerFunctionId f
                              findVariable fs ofid vn
 
--- TODO: test this algorithm
+
 findLocalFunction :: [T.Function] -> Id -> Id -> String -> Maybe Id
 findLocalFunction fs iid to fn = 
     let correctOutId = \f -> outerFunctionId f == Just iid in
@@ -124,8 +124,10 @@ translateBasicStatement fid (A.Return (Just ex)) s = do
     
 translateBasicStatement fid (VarDef v ex) s = do
     (ex', (sp,fp)) <- translateExpression fid ex s
-    -- check if such var exists
-    return $ let (vid,fp') = insertLocalVar fp fid v in (T.VarAssign vid ex', (sp,fp'))
+    case findVariable fp fid (varName v) of
+        Nothing -> let (vid,fp') = insertLocalVar fp fid v in
+                   Right (T.VarAssign vid ex', (sp,fp'))
+        Just _  -> Left $ DuplicateVariableDefinition v
 -- TODO: add VarAssign String Expression
 
 
