@@ -181,7 +181,6 @@ makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) =
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
 abstractToTranslatable t = do
     (_, tt) <- makeGlobalFunctionSignatures t ([], standartFunctions)
-    (_, tt'@(sp,fp)) <- translateMany translateGlobalFunction t tt
-    case checkFunctionsTypeErrors fp of
-         Nothing -> Right tt'
-         Just e  -> Left e
+    (_, tt'@(_,fp)) <- translateMany translateGlobalFunction t tt
+    checkFunctionsTypeErrors fp
+    return tt'
