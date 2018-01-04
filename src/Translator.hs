@@ -22,6 +22,13 @@ setFunctionBody fs fid ss =
         update fs (T.Function a b c d e ss) fid
 
         
+insertLocalVar :: [T.Function] -> Id -> Var -> (VariableId, [T.Function])
+insertLocalVar fs fid v =
+    let T.Function a b vs d e f = fs !! fid
+        (vid,vs') = insertAndGetId vs v
+    in (VariableId fid vid False, update fs (T.Function a b vs' d e f) fid)
+
+        
 translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
 translateMany f []       s = Right ([], s)
 translateMany f (x:xs) s = do
@@ -114,7 +121,12 @@ translateBasicStatement _ (A.Return Nothing) s = Right (T.Return Nothing, s)
 translateBasicStatement fid (A.Return (Just ex)) s = do
     (ex', s') <- translateExpression fid ex s
     return (T.Return (Just ex'), s')
--- TODO: add VarDef Var Expression, VarAssign String Expression
+    
+translateBasicStatement fid (VarDef v ex) s = do
+    (ex', (sp,fp)) <- translateExpression fid ex s
+    -- check if such var exists
+    return $ let (vid,fp') = insertLocalVar fp fid v in (T.VarAssign vid ex', (sp,fp'))
+-- TODO: add VarAssign String Expression
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement [T.Statement]
