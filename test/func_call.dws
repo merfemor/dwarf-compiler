@@ -1,0 +1,7 @@
+void main() {
+    print(getMsg())
+}
+
+string getMsg() {
+    return "hello"
+}
