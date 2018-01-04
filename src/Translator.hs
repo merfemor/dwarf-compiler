@@ -31,7 +31,7 @@ insertLocalVar fs fid v =
 
         
 translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
-translateMany f []       s = Right ([], s)
+translateMany _ []       s = Right ([], s)
 translateMany f (x:xs) s = do
     (x', s') <- f x s 
     (xs', s'') <- translateMany f xs s'
@@ -131,10 +131,12 @@ translateBasicStatement fid (VarDef v ex) s = do
         Just _  -> Left $ DuplicateVariableDefinition v
 
 translateBasicStatement fid (A.VarAssign vn ex) s = do
-    (ex',s'@(sp,fp)) <- translateExpression fid ex s
+    (ex',s'@(_,fp)) <- translateExpression fid ex s
     case findVariable fp fid vn of
          Nothing  -> Left $ UndefinedVariable vn
          Just vid -> Right (T.VarAssign vid ex', s')
+         
+translateBasicStatement _ _ _ = error "complex statement"
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement [T.Statement]
@@ -153,16 +155,14 @@ translateStatements fid sts s = do
 
 
 translateGlobalFunction :: TreeTransaltor A.Function ()
-translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
-    let f = T.Function t n [] args (Just fid) []
-        Just fid = findIndex (\f -> T.funcName f == n) fp 
-    in do
+translateGlobalFunction (A.Function _ n _ ss) s@(_,fp) = 
+    let Just fid = findIndex (\x -> T.funcName x == n) fp in do
         (ss', (sp,fp')) <- translateStatements fid ss s
         return ((), (sp, setFunctionBody fp' fid ss'))
 
 
 translateFunction :: Id -> TreeTransaltor A.Function ()
-translateFunction fid (A.Function t n args ss) s@(sp,fp) = 
+translateFunction fid (A.Function t n args ss) (sp,fp) = 
     let f = T.Function t n [] args (Just fid) []
         (nfid,fp') = insertAndGetId fp f in do
     (ss', (sp',fp'')) <- translateStatements nfid ss (sp, fp')
