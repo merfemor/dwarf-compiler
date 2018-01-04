@@ -1,0 +1,6 @@
+void main() {
+    int a = 666
+	void b() {
+        double a = 13.2
+    }
+}
