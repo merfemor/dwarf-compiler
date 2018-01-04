@@ -39,7 +39,7 @@ data Statement = VarAssign VariableId  Expression
                | WhileLoop Expression [Statement]
                | IfElse Expression [Statement] [Statement]
                | Return (Maybe Expression)
-               | StFCall Id [Expression] deriving Show
+               | FuncCall Id [Expression] deriving Show
 
 -- string pool and function list
 type TranslatableProgramTree = ([String], [Function])
@@ -47,10 +47,8 @@ type TranslatableProgramTree = ([String], [Function])
 
 standartFunctions :: [Function]
 standartFunctions = [ Function Nothing       "print"    [] [Var String ""] Nothing []
-                    , Function Nothing       "print"    [] [Var Int    ""] Nothing []
-                    , Function Nothing       "print"    [] [Var Double ""] Nothing []
-                    , Function (Just Int)    "toInt"    [] [Var Double ""] Nothing []
-                    , Function (Just Double) "toDouble" [] [Var Int    ""] Nothing []
+                    , Function Nothing       "printn"   [] [Var Double ""] Nothing []
+                    , Function (Just Int)    "dtoi"     [] [Var Double ""] Nothing []
                     ]
                     
 isStandartFunction :: String -> Bool

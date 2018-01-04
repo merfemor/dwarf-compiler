@@ -12,10 +12,16 @@ insertAndGetId :: [a] -> a -> (Int, [a])
 insertAndGetId l e = (length l, l ++ [e])
 
 
+update :: [a] -> a -> Int -> [a]
+update xs e i = take i xs ++ [e] ++ drop (i + 1) xs
+
+
 setFunctionBody :: [T.Function] -> Id -> [T.Statement] -> [T.Function]
-setFunctionBody = undefined
+setFunctionBody fs fid ss = 
+    let T.Function a b c d e _ = fs !! fid in
+        update fs (T.Function a b c d e ss) fid
 
-
+        
 translateMany :: TreeTransaltor a b -> TreeTransaltor [a] [b]
 translateMany f []       s = Right ([], s)
 translateMany f (x:xs) s = do
@@ -86,12 +92,12 @@ translateExpression fid (A.FCall (FunctionCall fn exs)) s@(_, fp) =
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
-translateStatement fid (FuncCall (FunctionCall n es)) (sp,fp) = 
-    if isStandartFunction n then 
-        undefined
-    else case findFunction fp fid n of
-            Nothing   -> Left $ UndefinedFunction n
-            Just ffid -> undefined
+translateStatement fid (A.FuncCall (FunctionCall n es)) s@(_,fp) = 
+    case findFunction fp fid n of
+         Nothing   -> Left $ UndefinedFunction n
+         Just ffid -> do
+             (es', s') <- translateMany (translateExpression fid) es s
+             return (T.FuncCall ffid es', s')
 
 
 translateGlobalFunction :: TreeTransaltor A.Function ()
@@ -122,6 +128,6 @@ makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) =
 
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
 abstractToTranslatable t = do
-    (_, tt) <- makeGlobalFunctionSignatures t ([],[])
+    (_, tt) <- makeGlobalFunctionSignatures t ([], standartFunctions)
     (_, tt') <- translateMany translateGlobalFunction t tt
     return tt'
