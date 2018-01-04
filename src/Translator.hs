@@ -91,37 +91,53 @@ translateExpression fid (A.FCall (FunctionCall fn exs)) s@(_, fp) =
              return (T.FCall ffid exs', s')
 
 
-translateStatement :: Id -> TreeTransaltor A.Statement T.Statement
-translateStatement fid (A.FuncCall (FunctionCall n es)) s@(_,fp) = 
+translateBasicStatement :: Id -> TreeTransaltor A.Statement T.Statement
+translateBasicStatement fid (A.FuncCall (FunctionCall n es)) s@(_,fp) = 
     case findFunction fp fid n of
          Nothing   -> Left $ UndefinedFunction n
          Just ffid -> do
              (es', s') <- translateMany (translateExpression fid) es s
              return (T.FuncCall ffid es', s')
 
-translateStatement fid (A.WhileLoop ex ss) s = do
+translateBasicStatement fid (A.WhileLoop ex ss) s = do
     (ex', s') <- translateExpression fid ex s
-    (ss', s'') <- translateMany (translateStatement fid) ss s'
+    (ss', s'') <- translateMany (translateBasicStatement fid) ss s'
     return (T.WhileLoop ex' ss', s'')
     
-translateStatement fid (A.IfElse ex iss ess) s = do
+translateBasicStatement fid (A.IfElse ex iss ess) s = do
     (ex', s') <- translateExpression fid ex s
-    (iss', s'') <- translateMany (translateStatement fid) iss s'
-    (ess', s''') <- translateMany (translateStatement fid) ess s''
+    (iss', s'') <- translateMany (translateBasicStatement fid) iss s'
+    (ess', s''') <- translateMany (translateBasicStatement fid) ess s''
     return (T.IfElse ex' iss' ess', s''')
     
-translateStatement _ (A.Return Nothing) s = Right (T.Return Nothing, s)
-translateStatement fid (A.Return (Just ex)) s = do
+translateBasicStatement _ (A.Return Nothing) s = Right (T.Return Nothing, s)
+translateBasicStatement fid (A.Return (Just ex)) s = do
     (ex', s') <- translateExpression fid ex s
     return (T.Return (Just ex'), s')
--- TODO: add VarDef Var Expression, VarAssign String Expression, FuncDef Function parsing
+-- TODO: add VarDef Var Expression, VarAssign String Expression
+
+
+translateStatement :: Id -> TreeTransaltor A.Statement [T.Statement]
+translateStatement fid (FuncDef f) s = do
+    (_, s') <- translateFunction fid f s
+    return ([], s')
+translateStatement i st s = do
+    (st', s') <- translateBasicStatement i st s
+    return ([st'], s')
+    
+
+translateStatements :: Id -> TreeTransaltor [A.Statement] [T.Statement]
+translateStatements fid sts s = do
+    (sts', s') <- translateMany (translateStatement fid) sts s
+    return (concat sts', s')
+
 
 translateGlobalFunction :: TreeTransaltor A.Function ()
 translateGlobalFunction (A.Function t n args ss) s@(_,fp) = 
     let f = T.Function t n [] args (Just fid) []
         Just fid = findIndex (\f -> T.funcName f == n) fp 
     in do
-        (ss', (sp,fp')) <- translateMany (translateStatement fid) ss s
+        (ss', (sp,fp')) <- translateStatements fid ss s
         return ((), (sp, setFunctionBody fp' fid ss'))
 
 
@@ -129,8 +145,8 @@ translateFunction :: Id -> TreeTransaltor A.Function ()
 translateFunction fid (A.Function t n args ss) s@(sp,fp) = 
     let f = T.Function t n [] args (Just fid) []
         (nfid,fp') = insertAndGetId fp f in do
-    (ss', s') <- translateMany (translateStatement nfid) ss (sp, fp')
-    return undefined
+    (ss', (sp',fp'')) <- translateStatements nfid ss (sp, fp')
+    return ((), (sp', setFunctionBody fp'' nfid ss'))
 
          
 makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
