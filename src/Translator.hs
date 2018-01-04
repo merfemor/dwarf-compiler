@@ -128,7 +128,12 @@ translateBasicStatement fid (VarDef v ex) s = do
         Nothing -> let (vid,fp') = insertLocalVar fp fid v in
                    Right (T.VarAssign vid ex', (sp,fp'))
         Just _  -> Left $ DuplicateVariableDefinition v
--- TODO: add VarAssign String Expression
+
+translateBasicStatement fid (A.VarAssign vn ex) s = do
+    (ex',s'@(sp,fp)) <- translateExpression fid ex s
+    case findVariable fp fid vn of
+         Nothing  -> Left $ UndefinedVariable vn
+         Just vid -> Right (T.VarAssign vid ex', s')
 
 
 translateStatement :: Id -> TreeTransaltor A.Statement [T.Statement]
