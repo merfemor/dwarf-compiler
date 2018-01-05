@@ -72,10 +72,11 @@ setFunctionBody fs fid ss =
     let Function a b c d e _ = fs !! fid in
         update fs (Function a b c d e ss) fid
         
-        
+{-        
 eitherStateChain :: (a -> d -> Either b c) -> [a] -> d -> Either b [c]
 eitherStateChain _ []     _   = Right []
 eitherStateChain f (x:xs) fns = do
     x <- f x fns 
     xs <- eitherStateChain f xs fns
     return (x:xs)
+    -} 
