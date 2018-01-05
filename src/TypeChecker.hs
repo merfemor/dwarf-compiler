@@ -15,7 +15,7 @@ fromEitherList (e:es) = do
 
     
 checkStatement :: Id -> Statement -> [Function] -> Either CompilationError ()
-checkStatement _ _ _ = Right ()
+checkStatement _ _ _ = Right () -- FIXME: implement type check
 
 
 checkFunction :: Function -> [Function] -> Either CompilationError ()

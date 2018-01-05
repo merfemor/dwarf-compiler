@@ -80,3 +80,4 @@ eitherStateChain f (x:xs) fns = do
     xs <- eitherStateChain f xs fns
     return (x:xs)
     -} 
+-- TODO: does this function need somewhere?
