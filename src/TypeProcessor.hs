@@ -15,10 +15,27 @@ fromEitherList (e:es) = do
     bs <- fromEitherList es
     return (b:bs)
 
+    
+translateStatement :: Id -> TypeTranslator Statement
+translateStatement fid s@(Return Nothing) fs = let f = fs !! fid in
+    case returnType f of
+         Nothing -> Right s
+         et      -> Left $ ReturnTypeMismatch (funcName f) (TypeMismatch et Nothing)
+{-
+
+                 VarAssign VariableId  Expression
+               | WhileLoop Expression [Statement]
+               | IfElse Expression [Statement] [Statement]
+               | Return (Maybe Expression)
+               | FuncCall Id [Expression]
+-}
+
 
 translateFunction :: Id -> TypeTranslator Function
-translateFunction = undefined
-
+translateFunction fid (Function a b c d e ss) fs = do
+    ss' <- fromEitherList $ map (\s -> translateStatement fid s fs) ss
+    return $  Function a b c d e ss'
+        
 
 translateFunctions :: [Function] -> Either CompilationError [Function]
 translateFunctions fs = fromEitherList $
