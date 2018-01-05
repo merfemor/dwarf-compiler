@@ -25,6 +25,10 @@ data Function = Function { returnType :: Maybe Type
                          , outerFunctionId :: Maybe Id
                          , functionBody :: [Statement]
                          } deriving Show
+
+instance Eq Function where
+    f == g = funcName f == funcName g && outerFunctionId f == outerFunctionId g
+                         
                          
 data Expression = SLit Id
                 | ILit Int
@@ -53,3 +57,25 @@ standartFunctions = [ Function Nothing       "print"    [] [Var String ""] Nothi
                     
 isStandartFunction :: String -> Bool
 isStandartFunction n = Nothing /= findIndex (\f -> funcName f == n) standartFunctions
+
+
+insertAndGetId :: [a] -> a -> (Int, [a])
+insertAndGetId l e = (length l, l ++ [e])
+
+
+update :: [a] -> a -> Int -> [a]
+update xs e i = take i xs ++ [e] ++ drop (i + 1) xs
+
+
+setFunctionBody :: [Function] -> Id -> [Statement] -> [Function]
+setFunctionBody fs fid ss = 
+    let Function a b c d e _ = fs !! fid in
+        update fs (Function a b c d e ss) fid
+        
+        
+eitherStateChain :: (a -> d -> Either b c) -> [a] -> d -> Either b [c]
+eitherStateChain _ []     _   = Right []
+eitherStateChain f (x:xs) fns = do
+    x <- f x fns 
+    xs <- eitherStateChain f xs fns
+    return (x:xs)
