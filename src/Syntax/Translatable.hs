@@ -49,16 +49,6 @@ data Statement = VarAssign VariableId  Expression
 type TranslatableProgramTree = ([String], [Function])
 
 
-standartFunctions :: [Function]
-standartFunctions = [ Function Nothing       "print"    [] [Var String ""] Nothing []
-                    , Function Nothing       "printn"   [] [Var Double ""] Nothing []
-                    , Function (Just Int)    "dtoi"     [] [Var Double ""] Nothing []
-                    ]
-                    
-isStandartFunction :: String -> Bool
-isStandartFunction n = Nothing /= findIndex (\f -> funcName f == n) standartFunctions
-
-
 insertAndGetId :: [a] -> a -> (Int, [a])
 insertAndGetId l e = (length l, l ++ [e])
 

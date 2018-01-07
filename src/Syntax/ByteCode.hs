@@ -1,7 +1,7 @@
 module Syntax.ByteCode where
 
 import Syntax.Translatable(Id)
-import Syntax.Abstract(Type)
+import Syntax.Abstract(Type, Var)
 
 data BCCommand = ILOAD Int | DLOAD Double | LOADS Id
                | DADD | IADD | DSUB | ISUB
@@ -17,9 +17,10 @@ data BCCommand = ILOAD Int | DLOAD Double | LOADS Id
                | IFICMPL Int | IFICMPLE Int | DUMP
                | CALL Id | RETURN | BREAK | STOP deriving Show 
 
-data Function = Function { returnType :: Maybe Type
-                         , funcName :: Id
-                         , localVars :: [Type]
-                         , arguments :: [Type]
+data Function = Function { funcName :: Id
+                         , localVars :: [Var]
+                         , arguments :: [Var]
                          , functionBody :: [BCCommand]
                          } deriving Show
+
+type ByteCodeProgramTree = ([String], [Function])

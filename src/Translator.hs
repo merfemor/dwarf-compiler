@@ -5,6 +5,7 @@ import Syntax.Abstract     as A
 import Syntax.Error
 import Data.List
 import TypeChecker
+import InlinedStdLibrary
 
 type TreeTransaltor a b = a -> TranslatableProgramTree -> Either CompilationError (b, TranslatableProgramTree)
 

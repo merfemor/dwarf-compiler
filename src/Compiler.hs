@@ -20,6 +20,6 @@ main = do
                     putStrLn $ show res ++ "\n\n"
                     case abstractToTranslatable res of
                         Left e     -> putStrLn $ show e
-                        Right trtd@(_,fp) -> do
+                        Right trtd -> do
                             putStrLn $ show trtd
-                            putStrLn $ "\n\n" ++ show (toByteCode fp)
+                            putStrLn $ "\n\n" ++ show (toByteCode trtd)
