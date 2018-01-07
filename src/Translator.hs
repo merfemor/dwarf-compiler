@@ -165,9 +165,16 @@ makeGlobalFunctionSignatures (af@(A.Function t fn args _):fs) (sp, fp) =
                     makeGlobalFunctionSignatures fs (sp, fp ++ [tf])
 
 
+addReturnToVoidFunc :: [T.Function] -> [T.Function]
+addReturnToVoidFunc fs = map addVoid fs where
+    addVoid f@(T.Function t n l a o ss)
+        | t /= Nothing || ss == [] || last ss == T.Return Nothing = f
+        | otherwise = T.Function Nothing n l a o (ss ++ [T.Return Nothing])
+                
+                
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
 abstractToTranslatable t = do
     (_, tt) <- makeGlobalFunctionSignatures t ([], standartFunctions)
     (_, (sp,fp)) <- translateMany translateGlobalFunction t tt
-    _ <- checkFunctions fp
-    return (sp,fp)
+    _ <- checkFunctions fp -- TODO: add return at the end of void functions
+    return (sp, addReturnToVoidFunc fp)

@@ -69,7 +69,7 @@ translateExpression fs (VCall vid) = [LOADCTXDVAR (funcId vid) (translateVarId f
 translateExpression fs (UnaryExpression op e) = 
     translateExpression fs e ++ 
     translateUnaryOperation (expressionType fs e) op 
-translateExpression fs e@(BinaryExpression op ex1 ex2) = 
+translateExpression fs (BinaryExpression op ex1 ex2) = 
     let t1 = expressionType fs ex1
         t2 = expressionType fs ex2
         t  = if t1 == t2 then t1 else StdType $ Just $ Double in

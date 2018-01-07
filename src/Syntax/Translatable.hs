@@ -16,7 +16,7 @@ type Id = Int
 data VariableId = VariableId { funcId :: Id
                              , varId :: Id
                              , isArgument :: Bool
-                             } deriving Show
+                             } deriving (Eq, Show)
 
 data Function = Function { returnType :: VoidableType
                          , funcName :: String
@@ -37,13 +37,13 @@ data Expression = SLit Id
                 | BinaryExpression BinaryOperation Expression Expression
                 | FCall Id [Expression]
                 | VCall VariableId
-                deriving Show
+                deriving (Eq, Show)
                 
 data Statement = VarAssign VariableId  Expression
                | WhileLoop Expression [Statement]
                | IfElse Expression [Statement] [Statement]
                | Return (Maybe Expression)
-               | FuncCall Id [Expression] deriving Show
+               | FuncCall Id [Expression] deriving (Eq, Show)
 
 -- string pool and function list
 type TranslatableProgramTree = ([String], [Function])
