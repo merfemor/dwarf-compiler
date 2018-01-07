@@ -1,6 +1,7 @@
 module Syntax.ByteCode where
 
 import Syntax.Translatable(Id)
+import Syntax.Abstract(Type)
 
 data BCCommand = ILOAD Int | DLOAD Double | LOADS Id
                | DADD | IADD | DSUB | ISUB
@@ -15,3 +16,10 @@ data BCCommand = ILOAD Int | DLOAD Double | LOADS Id
                | IFICMPE Int | IFICMPG Int | IFICMPGE Int
                | IFICMPL Int | IFICMPLE Int | DUMP
                | CALL Id | RETURN | BREAK | STOP deriving Show 
+
+data Function = Function { returnType :: Maybe Type
+                         , funcName :: Id
+                         , localVars :: [Type]
+                         , arguments :: [Type]
+                         , functionBody :: [BCCommand]
+                         } deriving Show

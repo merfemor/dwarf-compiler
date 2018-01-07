@@ -2,6 +2,7 @@ module Main where
 
 import Parser
 import Translator
+import ByteCodeTranslator
 import Text.ParserCombinators.Parsec
 import System.Environment
 
@@ -19,4 +20,6 @@ main = do
                     putStrLn $ show res ++ "\n\n"
                     case abstractToTranslatable res of
                         Left e     -> putStrLn $ show e
-                        Right trtd -> putStrLn $ show trtd
+                        Right trtd@(_,fp) -> do
+                            putStrLn $ show trtd
+                            putStrLn $ "\n\n" ++ show (toByteCode fp)
