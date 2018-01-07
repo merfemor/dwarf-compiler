@@ -9,7 +9,7 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
 data UnaryOperation = Not | Neg deriving (Show, Eq)
 
 unaryOperations :: Map.Map String UnaryOperation
-unaryOperations = Map.fromList [("not", Not), ("-", Neg)]
+unaryOperations = Map.fromList [("!", Not), ("-", Neg)]
 
 data BinaryOperation = And | Or | Eq | G | L | GE | LE | NotE | Sum | Sub | Mul | Div deriving (Show, Eq)
 
