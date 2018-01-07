@@ -2,7 +2,7 @@ module Syntax.Translatable where
 
 import Syntax.Abstract ( UnaryOperation
                        , BinaryOperation
-                       , Type
+                       , Type, VoidableType
                        , Type(Int)
                        , Type(Double)
                        , Type(String)
@@ -18,7 +18,7 @@ data VariableId = VariableId { funcId :: Id
                              , isArgument :: Bool
                              } deriving Show
 
-data Function = Function { returnType :: Maybe Type
+data Function = Function { returnType :: VoidableType
                          , funcName :: String
                          , localVars :: [Var]
                          , arguments :: [Var]

@@ -6,12 +6,11 @@ import Syntax.Abstract ( Type(Int)
                        , Type(String)
                        , varType
                        , isUnaryBoolean
-                       , isBinaryBoolean)
+                       , isBinaryBoolean
+                       , ExType, ExType(StdType), ExType(Boolean))
 import Syntax.Error
 import Data.List(elemIndex)
 import Data.Maybe(fromJust)
-
-data ExType = StdType (Maybe Type) | Boolean
 
 
 fromEitherList :: [Either a b] -> Either a [b]
@@ -22,7 +21,6 @@ fromEitherList (e:es) = do
     return (b:bs)
     
 
--- assuming that types are right
 expressionType :: [Function] -> Expression -> ExType
 expressionType _ (ILit _) = StdType $ Just Int
 expressionType _ (DLit _) = StdType $ Just Double
@@ -45,7 +43,7 @@ expressionType fs (BinaryExpression op ex1 ex2)
 
     
 checkStatement :: Id -> Statement -> [Function] -> Either CompilationError ()
-checkStatement _ _ _ = Right () -- FIXME: implement type check
+checkStatement _ _ _ = Right ()
 
 
 checkFunction :: Function -> [Function] -> Either CompilationError ()

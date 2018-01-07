@@ -1,6 +1,11 @@
 module ByteCodeTranslator(toByteCode) where
 
-import Syntax.Abstract(UnaryOperation, BinaryOperation)
+import Syntax.Abstract ( Type, Type(Int), Type(Double), Type(String)
+                       , UnaryOperation, UnaryOperation(Neg), UnaryOperation(Not)
+                       , BinaryOperation, BinaryOperation(And), BinaryOperation(Or)
+                       , BinaryOperation(Eq), BinaryOperation(G), BinaryOperation(L), BinaryOperation(GE), BinaryOperation(LE), BinaryOperation(NotE)
+                       , BinaryOperation(Sum), BinaryOperation(Sub), BinaryOperation(Mul), BinaryOperation(Div)
+                       , ExType, ExType(StdType))
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
 import TypeChecker(expressionType)
@@ -18,12 +23,25 @@ translateVarId _  (VariableId _   vid True)  = vid
 translateVarId fs (VariableId fid vid False) = vid + length (T.arguments (fs !! fid))
 
 
-translateUnaryOperation :: UnaryOperation -> [BCCommand]
-translateUnaryOperation = undefined
+translateUnaryOperation :: ExType -> UnaryOperation -> [BCCommand]
+translateUnaryOperation (StdType (Just Int))    Neg = [INEG]
+translateUnaryOperation (StdType (Just Double)) Neg = [DNEG]
+translateUnaryOperation _ Not = [LOAD_i 1, ISUB] -- TODO: if TOS = 0 then TOS became -1: is it normal?
 
 
-translateBinaryOperation :: BinaryOperation -> [BCCommand]
-translateBinaryOperation = undefined
+translateBinaryOperation :: ExType -> BinaryOperation -> [BCCommand]
+translateBinaryOperation (StdType (Just Int))    Sum = [IADD]
+translateBinaryOperation (StdType (Just Double)) Sum = [DADD]
+translateBinaryOperation (StdType (Just Int))    Sub = [ISUB]
+translateBinaryOperation (StdType (Just Double)) Sub = [DSUB]
+translateBinaryOperation (StdType (Just Int))    Mul = [IMUL]
+translateBinaryOperation (StdType (Just Double)) Mul = [DMUL]
+translateBinaryOperation (StdType (Just Int))    Div = [IDIV]
+translateBinaryOperation (StdType (Just Double)) Div = [DDIV]
+translateBinaryOperation _ And = [IMUL]
+translateBinaryOperation _ Or  = [IADD] -- TODO: true is anything not equal to 0? 1 + 1 = 2
+translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
+
 
 
 translateExpression :: [T.Function] -> Expression -> [BCCommand]
@@ -32,20 +50,29 @@ translateExpression _ (ILit i) = [LOAD_i i]
 translateExpression _ (DLit i) = [LOAD_d i]
 translateExpression fs (FCall i exs) = (concatMap (translateExpression fs) exs) ++ [CALL i]
 translateExpression fs (VCall vid) = [LOADCTXDVAR (funcId vid) (translateVarId fs vid)]
-translateExpression fs (UnaryExpression op ex) = translateExpression fs ex ++ translateUnaryOperation op
-translateExpression fs (BinaryExpression op ex1 ex2) = translateExpression fs ex1 ++ translateExpression fs ex2 ++ translateBinaryOperation op
+translateExpression fs (UnaryExpression op e) = 
+    translateExpression fs e ++ 
+    translateUnaryOperation (expressionType fs e) op 
+translateExpression fs e@(BinaryExpression op ex1 ex2) = 
+    let t1 = expressionType fs ex1
+        t2 = expressionType fs ex2
+        t  = expressionType fs e in
+    translateExpression fs ex1 ++ 
+    (if t1 == StdType (Just Int) && t2 == StdType (Just Double) then [I2D] else []) ++
+    translateExpression fs ex2 ++ 
+    (if t1 == StdType (Just Double) && t2 == StdType (Just Int) then [I2D] else []) ++
+    translateBinaryOperation t op
 
 
 translateStatement :: [T.Function] -> Statement -> [BCCommand]
 translateStatement _ (Return Nothing) = [RETURN]
 translateStatement fs (Return (Just e)) = translateExpression fs e ++ [RETURN]
 translateStatement fs (FuncCall i es) = concatMap (translateExpression fs) es ++ [CALL i]
-{-
-                 VarAssign VariableId  Expression
-               | WhileLoop Expression [Statement]
-               | IfElse Expression [Statement] [Statement]
--}
+translateStatement fs (VarAssign vid e) = translateExpression fs e ++ [STORECTXVAR (funcId vid) (translateVarId fs vid)]
+{- | WhileLoop Expression [Statement]
+   | IfElse Expression [Statement] [Statement] -}
 
+-- TODO: store args in local vars
 translateFunction :: TranslatableProgramTree -> T.Function -> BC.Function
 translateFunction (sp,fp) (T.Function _ fn lvs args _ ss) = 
     let fnid = fromJust $ elemIndex fn sp

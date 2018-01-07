@@ -23,16 +23,30 @@ binaryOperations = Map.fromList [("and", And), ("or", Or),
                                  ("+", Sum), ("-", Sub), ("*", Mul), ("/", Div)]
                                  
 isBinaryBoolean :: BinaryOperation -> Bool
-isBinaryBoolean op = op == Sum || op == Sub || op == Mul || op == Div
+isBinaryBoolean op = op /= Sum && op /= Sub && op /= Mul && op /= Div
 
-data Type = Int | Double | String deriving (Eq, Show)
+data Type = Int | Double | String deriving Eq
+
+instance Show Type where
+    show Int = "int"
+    show Double = "double"
+    show String = "string"
+
+type VoidableType = Maybe Type
+
+data ExType = StdType VoidableType | Boolean deriving Eq
+
+instance Show ExType where
+    show Boolean = "boolean"
+    show (StdType Nothing) = "void"
+    show (StdType (Just t)) = show t
 
 builtInTypes :: Map.Map String Type
 builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]
 
 data Var = Var { varType :: Type, varName :: String } deriving Show
 
-data Function = Function { returnType :: Maybe Type
+data Function = Function { returnType :: VoidableType
                          , funcName :: String
                          , arguments :: [Var]
                          , functionBody :: FunctionBody
