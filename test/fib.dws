@@ -1,0 +1,16 @@
+int fib (int n) {
+    int r1 = 0
+    int r2 = 1
+    int i = 1
+    while (i < n) {
+        int s = r1 + r2
+        r1 = r2
+        r2 = s
+        i = i + 1
+    }
+    return r1
+}
+
+void main() {
+	printn(fib(7))
+}
