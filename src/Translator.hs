@@ -174,7 +174,7 @@ addReturnToVoidFunc fs = map addVoid fs where
                 
 abstractToTranslatable :: AbstractProgramTree -> Either CompilationError TranslatableProgramTree
 abstractToTranslatable t = do
-    (_, tt) <- makeGlobalFunctionSignatures t ([], standartFunctions)
+    (_, tt) <- makeGlobalFunctionSignatures t ([], standardFunctions)
     (_, (sp,fp)) <- translateMany translateGlobalFunction t tt
     _ <- checkFunctions fp -- TODO: add return at the end of void functions
     return (sp, addReturnToVoidFunc fp)

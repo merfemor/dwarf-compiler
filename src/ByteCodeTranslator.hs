@@ -5,16 +5,14 @@ import Syntax.Abstract ( Type, Type(Int), Type(Double), Type(String)
                        , BinaryOperation, BinaryOperation(And), BinaryOperation(Or)
                        , BinaryOperation(Eq), BinaryOperation(G), BinaryOperation(L), BinaryOperation(GE), BinaryOperation(LE), BinaryOperation(NotE)
                        , BinaryOperation(Sum), BinaryOperation(Sub), BinaryOperation(Mul), BinaryOperation(Div)
-                       , ExType, ExType(StdType), ExType(Boolean))
+                       , ExType, ExType(StdType), ExType(Boolean)
+                       , varType)
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
 import TypeChecker(expressionType)
 import Data.Maybe(fromJust)
 import Data.List(elemIndex)
-
--- TODO: need to clear stack?
-
--- TODO: set std functions body in the end of translating
+import InlinedStdLibrary
 
 -- TODO: place main to 0 idx
 
@@ -89,8 +87,8 @@ translateStatement f fs (Return (Just e)) =
     [RETURN]
 translateStatement f fs (FuncCall i es) = 
     concatMap (translateExpression fs) es ++ -- convert types
-    [CALL i] ++
-    if returnType f == Nothing then [] else [POP]
+    [CALL i] 
+        -- ++ if returnType f == Nothing then [] else [POP] need that?
 
 translateStatement _ fs (VarAssign vid e) = 
     translateExpression fs e ++ 
@@ -118,11 +116,19 @@ translateFunction (sp,fp) f@(T.Function _ fn lvs args _ ss) =
         returnToStop RETURN = STOP
         returnToStop s = s
         ss'' = if fn == "main" then map returnToStop ss' else ss'
-    in BC.Function fnid (args ++ lvs) args (map STOREVAR [0..length args - 1] ++  ss'')
+    in BC.Function fnid (args ++ lvs) (map varType args) (map STOREVAR [0..length args - 1] ++  ss'')
 
+    
+setStandardFunBodies :: [BC.Function] -> [BC.Function]
+setStandardFunBodies sfs = map replaceBody (zip [0..] sfs) where
+    replaceBody (i, (BC.Function n l as _)) = BC.Function n l as (bodiesOfStandardFunctions !! i)
 
 toByteCode :: TranslatableProgramTree -> ByteCodeProgramTree
 toByteCode tpt@(_,fp) = 
-    let sp' = addFunctionNamesToStringPool tpt 
+    let sp' = addFunctionNamesToStringPool tpt
         fp' = map (translateFunction (sp',fp)) fp
-    in (sp', fp')
+        sfs = take (length standardFunctions) fp'
+        ufs = drop (length standardFunctions) fp'
+        sfs' = setStandardFunBodies sfs
+        fp'' = sfs' ++ ufs
+    in (sp', fp'')

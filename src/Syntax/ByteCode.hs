@@ -19,7 +19,7 @@ data BCCommand = LOAD_i Int | LOAD_d Double | LOADS Id
 
 data Function = Function { funcName :: Id
                          , localVars :: [Var]
-                         , arguments :: [Var]
+                         , arguments :: [Type]
                          , functionBody :: [BCCommand]
                          } deriving Show
 
