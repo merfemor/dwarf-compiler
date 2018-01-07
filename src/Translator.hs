@@ -157,10 +157,10 @@ translateFunction fid (A.Function t n args ss) (sp,fp) =
          
 makeGlobalFunctionSignatures :: TreeTransaltor AbstractProgramTree ()
 makeGlobalFunctionSignatures [] s                              = Right ((), s)
-makeGlobalFunctionSignatures (af@(A.Function t fn _ _):fs) (sp, fp) = 
+makeGlobalFunctionSignatures (af@(A.Function t fn args _):fs) (sp, fp) = 
     case find (\f -> A.funcName f == fn) fs of
          Just _  -> Left $ DuplicateFunctionDefinition af
-         Nothing -> let tf = T.Function t fn [] [] Nothing [] in
+         Nothing -> let tf = T.Function t fn [] args Nothing [] in
                     makeGlobalFunctionSignatures fs (sp, fp ++ [tf])
 
 
