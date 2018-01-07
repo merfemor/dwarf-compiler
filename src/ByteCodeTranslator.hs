@@ -5,12 +5,14 @@ import Syntax.Abstract ( Type, Type(Int), Type(Double), Type(String)
                        , BinaryOperation, BinaryOperation(And), BinaryOperation(Or)
                        , BinaryOperation(Eq), BinaryOperation(G), BinaryOperation(L), BinaryOperation(GE), BinaryOperation(LE), BinaryOperation(NotE)
                        , BinaryOperation(Sum), BinaryOperation(Sub), BinaryOperation(Mul), BinaryOperation(Div)
-                       , ExType, ExType(StdType))
+                       , ExType, ExType(StdType), ExType(Boolean))
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
 import TypeChecker(expressionType)
 import Data.Maybe(fromJust)
 import Data.List(elemIndex)
+
+-- TODO: need to clear stack?
 
 -- TODO: set std functions body in the end of translating
 
@@ -26,7 +28,8 @@ translateVarId fs (VariableId fid vid False) = vid + length (T.arguments (fs !! 
 translateUnaryOperation :: ExType -> UnaryOperation -> [BCCommand]
 translateUnaryOperation (StdType (Just Int))    Neg = [INEG]
 translateUnaryOperation (StdType (Just Double)) Neg = [DNEG]
-translateUnaryOperation _ Not = [LOAD_i 1, ISUB] -- TODO: if TOS = 0 then TOS became -1: is it normal?
+translateUnaryOperation Boolean Not = [LOAD_i 1, IADD] -- FIXME: ! (! False) = True
+translateUnaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
 translateBinaryOperation :: ExType -> BinaryOperation -> [BCCommand]
@@ -38,8 +41,19 @@ translateBinaryOperation (StdType (Just Int))    Mul = [IMUL]
 translateBinaryOperation (StdType (Just Double)) Mul = [DMUL]
 translateBinaryOperation (StdType (Just Int))    Div = [IDIV]
 translateBinaryOperation (StdType (Just Double)) Div = [DDIV]
-translateBinaryOperation _ And = [IMUL]
-translateBinaryOperation _ Or  = [IADD] -- TODO: true is anything not equal to 0? 1 + 1 = 2
+translateBinaryOperation Boolean And = [IMUL]
+translateBinaryOperation Boolean Or = 
+    [ IADD
+    , LOAD_i 0
+    , IFICMPE 2
+    , POP
+    , LOAD_i 1 ]
+translateBinaryOperation (StdType (Just Int)) L = 
+    [ IFICMPL 3
+    , LOAD_i 0
+    , JA 1
+    , LOAD_i 1 ]
+    
 translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
@@ -56,7 +70,7 @@ translateExpression fs (UnaryExpression op e) =
 translateExpression fs e@(BinaryExpression op ex1 ex2) = 
     let t1 = expressionType fs ex1
         t2 = expressionType fs ex2
-        t  = expressionType fs e in
+        t  = if t1 == t2 then t1 else StdType $ Just $ Double in
     translateExpression fs ex1 ++ 
     (if t1 == StdType (Just Int) && t2 == StdType (Just Double) then [I2D] else []) ++
     translateExpression fs ex2 ++ 
@@ -64,19 +78,43 @@ translateExpression fs e@(BinaryExpression op ex1 ex2) =
     translateBinaryOperation t op
 
 
-translateStatement :: [T.Function] -> Statement -> [BCCommand]
-translateStatement _ (Return Nothing) = [RETURN]
-translateStatement fs (Return (Just e)) = translateExpression fs e ++ [RETURN]
-translateStatement fs (FuncCall i es) = concatMap (translateExpression fs) es ++ [CALL i]
-translateStatement fs (VarAssign vid e) = translateExpression fs e ++ [STORECTXVAR (funcId vid) (translateVarId fs vid)]
-{- | WhileLoop Expression [Statement]
-   | IfElse Expression [Statement] [Statement] -}
+translateStatement :: T.Function -> [T.Function] -> Statement -> [BCCommand]
+translateStatement _ _ (Return Nothing) = [RETURN]
+translateStatement f fs (Return (Just e)) =
+    let StdType t = expressionType fs e in
+    translateExpression fs e ++ 
+    (if returnType f == Just Double && t == Just Int then [I2D] else []) ++
+    [RETURN]
+translateStatement f fs (FuncCall i es) = 
+    concatMap (translateExpression fs) es ++ -- convert types
+    [CALL i] ++
+    if returnType f == Nothing then [] else [POP]
+
+translateStatement _ fs (VarAssign vid e) = 
+    translateExpression fs e ++ 
+    [STORECTXVAR (funcId vid) (translateVarId fs vid)] -- convert types
+
+translateStatement fid fs (WhileLoop e ss) = 
+    let ss' = concatMap (translateStatement fid fs) ss
+        offset = length ss' + 1 
+        e'  = translateExpression fs e
+        elen = length e'
+    in e' ++ [LOAD_i 0, IFICMPE offset] ++ ss' ++ [JA (-offset - 2 - elen)]
+    
+translateStatement fid fs (IfElse e iss ess) = 
+    let e' = translateExpression fs e
+        iss' = concatMap (translateStatement fid fs) iss
+        ess' = concatMap (translateStatement fid fs) ess
+        isslen = length iss'
+    in e' ++ [LOAD_i 0, IFICMPE isslen] ++ iss' ++ ess'
+            
+        
 
 -- TODO: store args in local vars
 translateFunction :: TranslatableProgramTree -> T.Function -> BC.Function
-translateFunction (sp,fp) (T.Function _ fn lvs args _ ss) = 
+translateFunction (sp,fp) f@(T.Function _ fn lvs args _ ss) = 
     let fnid = fromJust $ elemIndex fn sp
-        ss'  = concatMap (translateStatement fp) ss
+        ss'  = concatMap (translateStatement f fp) ss
         returnToStop RETURN = STOP
         returnToStop s = s
         ss'' = if fn == "main" then map returnToStop ss' else ss'
