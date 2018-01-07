@@ -3,7 +3,7 @@ module Syntax.ByteCode where
 import Syntax.Translatable(Id)
 import Syntax.Abstract(Type, Var)
 
-data BCCommand = ILOAD Int | DLOAD Double | LOADS Id
+data BCCommand = LOAD_i Int | LOAD_d Double | LOADS Id
                | DADD | IADD | DSUB | ISUB
                | DMUL | IMUL | DDIV | IDIV | IMOD
                | DNEG | INEG
