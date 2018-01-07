@@ -16,6 +16,8 @@ import Data.List(elemIndex)
 
 -- TODO: set std functions body in the end of translating
 
+-- TODO: place main to 0 idx
+
 addFunctionNamesToStringPool :: TranslatableProgramTree -> [String]
 addFunctionNamesToStringPool (sp,fp) = sp ++ map T.funcName fp
 
@@ -107,10 +109,8 @@ translateStatement fid fs (IfElse e iss ess) =
         ess' = concatMap (translateStatement fid fs) ess
         isslen = length iss'
     in e' ++ [LOAD_i 0, IFICMPE isslen] ++ iss' ++ ess'
-            
-        
 
--- TODO: store args in local vars
+
 translateFunction :: TranslatableProgramTree -> T.Function -> BC.Function
 translateFunction (sp,fp) f@(T.Function _ fn lvs args _ ss) = 
     let fnid = fromJust $ elemIndex fn sp
@@ -118,8 +118,7 @@ translateFunction (sp,fp) f@(T.Function _ fn lvs args _ ss) =
         returnToStop RETURN = STOP
         returnToStop s = s
         ss'' = if fn == "main" then map returnToStop ss' else ss'
-    in BC.Function fnid (args ++ lvs) args ss''
-                         
+    in BC.Function fnid (args ++ lvs) args (map STOREVAR [0..length args - 1] ++  ss'')
 
 
 toByteCode :: TranslatableProgramTree -> ByteCodeProgramTree
