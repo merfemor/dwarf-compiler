@@ -1,0 +1,4 @@
+void main() {
+    double d = 666.6
+	printn(13 + d)
+}
