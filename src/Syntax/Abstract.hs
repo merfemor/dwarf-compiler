@@ -11,14 +11,21 @@ data UnaryOperation = Not | Neg deriving (Show, Eq)
 unaryOperations :: Map.Map String UnaryOperation
 unaryOperations = Map.fromList [("!", Not), ("-", Neg)]
 
+isUnaryBoolean :: UnaryOperation -> Bool
+isUnaryBoolean = (== Not)
+
+
 data BinaryOperation = And | Or | Eq | G | L | GE | LE | NotE | Sum | Sub | Mul | Div deriving (Show, Eq)
 
 binaryOperations :: Map.Map String BinaryOperation
 binaryOperations = Map.fromList [("and", And), ("or", Or),
                                  ("==", Eq), (">", G), ("<", L), (">=", GE), ("<=", LE), ("!=", NotE),
                                  ("+", Sum), ("-", Sub), ("*", Mul), ("/", Div)]
+                                 
+isBinaryBoolean :: BinaryOperation -> Bool
+isBinaryBoolean op = op == Sum || op == Sub || op == Mul || op == Div
 
-data Type = Int | Double | String deriving Show
+data Type = Int | Double | String deriving (Eq, Show)
 
 builtInTypes :: Map.Map String Type
 builtInTypes = Map.fromList [("double", Double), ("int", Int), ("string", String)]

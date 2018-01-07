@@ -3,6 +3,7 @@ module ByteCodeTranslator(toByteCode) where
 import Syntax.Abstract(UnaryOperation, BinaryOperation)
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
+import TypeChecker(expressionType)
 import Data.Maybe(fromJust)
 import Data.List(elemIndex)
 
