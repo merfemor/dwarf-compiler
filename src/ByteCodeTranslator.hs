@@ -54,7 +54,7 @@ translateBinaryOperation Boolean Or =
     , POP
     , LOAD_i 1 ]
 translateBinaryOperation (StdType (Just Int)) L = 
-    [ IFICMPL 3
+    [ IFICMPL 2
     , LOAD_i 0
     , JA 1
     , LOAD_i 1 ]

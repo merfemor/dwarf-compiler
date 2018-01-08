@@ -57,6 +57,10 @@ update :: [a] -> a -> Int -> [a]
 update xs e i = take i xs ++ [e] ++ drop (i + 1) xs
 
 
+subList :: [a] -> Int -> Int -> [a]
+subList l f t = drop f . take t $ l
+
+
 setFunctionBody :: [Function] -> Id -> [Statement] -> [Function]
 setFunctionBody fs fid ss = 
     let Function a b c d e _ = fs !! fid in

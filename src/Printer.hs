@@ -1,6 +1,7 @@
 module Printer(putProgram, preTransform) where
 
 import Syntax.ByteCode
+import Syntax.Translatable(subList)
 import Syntax.Abstract (Type, Type(Int), Type(Double), Type(String))
 import Data.Binary.Put
 import Data.Binary.IEEE754 (putFloat64le)
@@ -8,7 +9,21 @@ import qualified Data.ByteString as BS
 
 
 transformJumpOffsets :: Function -> Function
-transformJumpOffsets = id -- TODO: implement transformJumpOffsets
+transformJumpOffsets (Function n l a cs) = 
+    let ecs = zip [0..] cs
+        trOff i o 
+            | o < 0     = (* (-1)) . sum . (map commandSizeInBytes) $ subList cs (i + o + 1) (i + 1)
+            | otherwise = sum . (map commandSizeInBytes) $ subList cs (i + 1) (i + o + 1)
+        trCom (i, c) = case c of
+                            JA o -> JA (trOff i o)
+                            IFICMPE o  -> IFICMPE (trOff i o)
+                            IFICMPG o  -> IFICMPG (trOff i o)
+                            IFICMPL o  -> IFICMPL (trOff i o)
+                            IFICMPNE o -> IFICMPNE (trOff i o)
+                            IFICMPGE o -> IFICMPGE (trOff i o)
+                            IFICMPLE o -> IFICMPLE (trOff i o)
+                            _          -> c
+    in (Function n l a (map trCom ecs))
 
 
 transformFIds :: [Function] -> Function -> Function
