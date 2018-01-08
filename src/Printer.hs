@@ -3,8 +3,13 @@ module Printer(putProgram) where
 import Syntax.ByteCode
 import Data.Binary.Put
 import Data.Binary
+import Syntax.Abstract (Type, Type(Int), Type(Double), Type(String))
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString as BS
+
+
+transformJumpOffsets :: Function -> Function
+transformJumpOffsets = id
 
 
 putCommand :: BCCommand -> Put
@@ -52,27 +57,36 @@ putCommand bcc = case bcc of
     
     
 putConstPool :: [String] -> Put
-putConstPool cp = let cp' = map (++ "\0") cp
+putConstPool cp = let cp' = map (++"\0") cp
                       cpsz = sum (map length cp') in do
                           putWord64le $ fromIntegral cpsz
                           foldl1 (>>) (map putStringUtf8 cp') 
 
                           
+putArgTypes :: [Type] -> Put
+putArgTypes ts = let r = replicate (16 - length ts) 0
+                     typeNum Int = 0
+                     typeNum Double = 1
+                     typeNum String = 2
+                 in foldl1 (>>) $ map putWord8 (map typeNum ts ++ r)
+
+
 putFunc :: Function -> Put
 putFunc (Function n l a b) = do
     putWord64le (fromIntegral n)
     putWord64le (fromIntegral (length l))
     putWord64le 0 -- not exported and not native
     putWord64le (fromIntegral (length a))
-    putWord16le undefined -- arg types
-    putWord64le undefined -- byte code size
+    putArgTypes a
+    putWord64le $ fromIntegral $ sum $ map commandSizeInBytes b -- byte code size
     foldl1 (>>) (map putCommand b)
 
 
 putProgram :: ByteCodeProgramTree -> Put
-putProgram (sp,fp) = do
+putProgram (sp,fp) = 
+    let fp' = map transformJumpOffsets fp in do
     putWord16le 0xBABA
     putWord64le 1 -- version     
     putConstPool sp
-    putWord64le . fromIntegral . length $ fp
-    foldl1 (>>) (map putFunc fp)
+    putWord64le . fromIntegral . length $ fp'
+    foldl1 (>>) (map putFunc fp')

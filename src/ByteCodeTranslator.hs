@@ -14,7 +14,6 @@ import Data.Maybe(fromJust)
 import Data.List(elemIndex, findIndex)
 import InlinedStdLibrary
 
--- TODO: place main to 0 idx
 
 addFunctionNamesToStringPool :: TranslatableProgramTree -> [String]
 addFunctionNamesToStringPool (sp,fp) = sp ++ map T.funcName fp
@@ -59,7 +58,7 @@ translateBinaryOperation t o = error $ "can't generate bytecode of operation " +
 
 
 translateExpression :: [T.Function] -> Expression -> [BCCommand]
-translateExpression _ (SLit i) = [LOADSVAR i]
+translateExpression _ (SLit i) = [LOADS i]
 translateExpression _ (ILit i) = [LOAD_i i]
 translateExpression _ (DLit i) = [LOAD_d i]
 translateExpression fs (FCall i exs) = (concatMap (translateExpression fs) exs) ++ [CALL i]

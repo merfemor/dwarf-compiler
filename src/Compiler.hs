@@ -28,7 +28,7 @@ main = do
                         Right trtd ->
                             let bc = toByteCode trtd
                                 bstr = putProgram bc 
-                                ofile = replaceExtension file ".dwsc"
+                                ofile = replaceExtension file ".dwc"
                             in do
                             putStrLn $ show trtd ++ "\n\n" ++ show bc
                             BS.writeFile ofile (runPut bstr)

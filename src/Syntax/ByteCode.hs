@@ -24,3 +24,24 @@ data Function = Function { funcName :: Id
                          } deriving Show
 
 type ByteCodeProgramTree = ([String], [Function])
+
+
+commandSizeInBytes :: BCCommand -> Int
+commandSizeInBytes c = 1 + case c of
+    LOAD_d _        -> 8
+    LOAD_i _        -> 8
+    LOADS _         -> 8
+    LOADVAR _       -> 4
+    LOADSVAR _      -> 4
+    LOADCTXVAR _ _  -> 8 + 4
+    STOREVAR _      -> 4
+    STORECTXVAR _ _ -> 8 + 4
+    JA _            -> 2
+    IFICMPNE _      -> 2
+    IFICMPE _       -> 2
+    IFICMPG _       -> 2
+    IFICMPGE _      -> 2
+    IFICMPL _       -> 2
+    IFICMPLE _      -> 2
+    CALL _          -> 8
+    _               -> 0
