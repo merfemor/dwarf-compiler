@@ -1,7 +1,7 @@
 module InlinedStdLibrary where 
 
 import Data.List(findIndex)
-import Syntax.Abstract (Type, Type(Double), Type(String), Type(Int), Var, Var(Var))
+import Syntax.Abstract (Type(..), Var(..))
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
 

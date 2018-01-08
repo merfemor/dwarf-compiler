@@ -33,7 +33,7 @@ expressionType fs (UnaryExpression op ex)
     | isUnaryBoolean op = Boolean 
     | otherwise         = expressionType fs ex
 
-expressionType fs (BinaryExpression Div ex1 ex2) = StdType $ Just Double
+expressionType _  (BinaryExpression Div _   _ ) = StdType $ Just Double
 expressionType fs (BinaryExpression op ex1 ex2)
     | isBinaryBoolean op = Boolean
     | otherwise          = 

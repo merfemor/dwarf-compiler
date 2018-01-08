@@ -2,14 +2,10 @@ module Syntax.Translatable where
 
 import Syntax.Abstract ( UnaryOperation
                        , BinaryOperation
-                       , Type, VoidableType
-                       , Type(Int)
-                       , Type(Double)
-                       , Type(String)
-                       , Var
-                       , Var(Var)
+                       , VoidableType
+                       , Var(..)
                        )
-import Data.List(findIndex)
+import Data.List()
 
 type Id = Int
 

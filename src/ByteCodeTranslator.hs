@@ -133,12 +133,17 @@ translateStatement _ _ (Return Nothing) = [RETURN]
 translateStatement f fs (Return (Just e)) =
     let StdType t = expressionType fs e in
     translateExpression fs e ++ 
-    (if returnType f == Just Double && t == Just Int then [I2D] else []) ++
+    (if t == Just Int && returnType f == Just Double then [I2D] else []) ++
     [RETURN]
+
 translateStatement _ fs (FuncCall i es) = translateFunctionCall fs i es
-translateStatement _ fs (VarAssign vid e) = 
+
+translateStatement _ fs (VarAssign vid@(VariableId fid vi isA) e) = 
+    let StdType (Just t) = expressionType fs e 
+        v = (if isA then T.arguments else T.localVars) (fs !! fid) !! vi in
     translateExpression fs e ++ 
-    [STORECTXVAR (funcId vid) (translateVarId fs vid)] -- convert types
+    (if t == Int && varType v == Double then [I2D] else []) ++
+    [STORECTXVAR (funcId vid) (translateVarId fs vid)]
 
 translateStatement fid fs (WhileLoop e ss) = 
     let ss' = concatMap (translateStatement fid fs) ss
