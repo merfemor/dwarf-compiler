@@ -33,7 +33,12 @@ translateVarId fs (VariableId fid vid False) = vid + length (T.arguments (fs !! 
 translateUnaryOperation :: ExType -> UnaryOperation -> [BCCommand]
 translateUnaryOperation (StdType (Just Int))    Neg = [INEG]
 translateUnaryOperation (StdType (Just Double)) Neg = [DNEG]
-translateUnaryOperation Boolean Not = [LOAD_i 1, IADD] -- FIXME: ! (! False) = True
+translateUnaryOperation Boolean Not = 
+    [ LOAD_i 0
+    , IFICMPE 2
+    , LOAD_i 0
+    , JA 1
+    , LOAD_i 1]
 translateUnaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
