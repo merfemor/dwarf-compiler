@@ -1,4 +1,4 @@
 void main() {
 	int a = 666
-	printn(a + 13)
+	printi(a + 13)
 }

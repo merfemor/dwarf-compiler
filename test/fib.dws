@@ -12,5 +12,5 @@ int fib (int n) {
 }
 
 void main() {
-	printn(fib(7))
+	printi(fib(10))
 }

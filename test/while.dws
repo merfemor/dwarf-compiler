@@ -1,8 +1,11 @@
 void main() {
     int i = 0
-    while (i < 10) {
+    while (i < 20) {
         i = i + 1
-        printn(i)
+        printi(i)
+        print("^2 = ")
+        printi(i * i)
+        print("\n")
     }
 }
     

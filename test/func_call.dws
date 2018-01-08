@@ -3,5 +3,5 @@ void main() {
 }
 
 string getMsg() {
-    return "hello"
+    return "message from function\n"
 }

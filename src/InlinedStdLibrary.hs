@@ -7,13 +7,14 @@ import Syntax.ByteCode     as BC
 
 standardFunctions :: [T.Function]
 standardFunctions = [ T.Function Nothing       "print"    [] [Var String ""] Nothing []
-                    , T.Function Nothing       "printn"   [] [Var Double ""] Nothing []
+                    , T.Function Nothing       "printi"   [] [Var Int    ""] Nothing []
+                    , T.Function Nothing       "printd"   [] [Var Double ""] Nothing []
                     , T.Function (Just Int)    "dtoi"     [] [Var Double ""] Nothing []
                     ]
 
 
 bodiesOfStandardFunctions :: [[BCCommand]]
-bodiesOfStandardFunctions = [[SPRINT, RETURN], [DPRINT, RETURN], [D2I, RETURN]]
+bodiesOfStandardFunctions = [[SPRINT, RETURN], [IPRINT, RETURN], [DPRINT, RETURN], [D2I, RETURN]]
 
                     
 isStandardFunction :: String -> Bool
