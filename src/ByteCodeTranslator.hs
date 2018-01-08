@@ -63,7 +63,7 @@ translateExpression _ (SLit i) = [LOADSVAR i]
 translateExpression _ (ILit i) = [LOAD_i i]
 translateExpression _ (DLit i) = [LOAD_d i]
 translateExpression fs (FCall i exs) = (concatMap (translateExpression fs) exs) ++ [CALL i]
-translateExpression fs (VCall vid) = [LOADCTXDVAR (funcId vid) (translateVarId fs vid)]
+translateExpression fs (VCall vid) = [LOADCTXVAR (funcId vid) (translateVarId fs vid)]
 translateExpression fs (UnaryExpression op e) = 
     translateExpression fs e ++ 
     translateUnaryOperation (expressionType fs e) op 

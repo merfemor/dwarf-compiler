@@ -10,12 +10,12 @@ data BCCommand = LOAD_i Int | LOAD_d Double | LOADS Id
                | IPRINT | DPRINT | SPRINT
                | I2D | D2I | S2I
                | SWAP | POP
-               | LOADVAR Id | LOADSVAR Id | LOADCTXDVAR Id Id
+               | LOADVAR Id | LOADSVAR Id | LOADCTXVAR Id Id
                | STOREVAR Id | STORECTXVAR Id Id
                | DCMP | ICMP | JA Int | IFICMPNE Int
                | IFICMPE Int | IFICMPG Int | IFICMPGE Int
                | IFICMPL Int | IFICMPLE Int | DUMP
-               | CALL Id | RETURN | BREAK | STOP deriving Show 
+               | CALL Id | RETURN | STOP deriving Show 
 
 data Function = Function { funcName :: Id
                          , localVars :: [Var]
