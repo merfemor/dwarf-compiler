@@ -109,4 +109,4 @@ function = do
     return $ Function t n args fb
 
 abstractProgramTree :: Parser AbstractProgramTree
-abstractProgramTree = many1 function
+abstractProgramTree = spaces >> many1 function
