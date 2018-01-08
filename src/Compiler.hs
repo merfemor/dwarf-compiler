@@ -1,10 +1,15 @@
 module Main where
 
 import Parser
+import Printer
 import Translator
 import ByteCodeTranslator
 import Text.ParserCombinators.Parsec
 import System.Environment
+import Data.Binary.Put(runPut)
+import System.FilePath.Posix(replaceExtension)
+import qualified Data.ByteString.Lazy as BS
+
 
 main :: IO ()
 main = do
@@ -20,6 +25,11 @@ main = do
                     putStrLn $ show res ++ "\n\n"
                     case abstractToTranslatable res of
                         Left e     -> putStrLn $ show e
-                        Right trtd -> do
-                            putStrLn $ show trtd
-                            putStrLn $ "\n\n" ++ show (toByteCode trtd)
+                        Right trtd ->
+                            let bc = toByteCode trtd
+                                bstr = putProgram bc 
+                                ofile = replaceExtension file ".dwsc"
+                            in do
+                            putStrLn $ show trtd ++ "\n\n" ++ show bc
+                            BS.writeFile ofile (runPut bstr)
+                            
