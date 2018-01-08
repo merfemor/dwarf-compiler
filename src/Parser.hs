@@ -24,7 +24,7 @@ int :: Parser Int
 int = fromInteger <$> Token.integer lexer
 
 mapValueBetweenSpaces :: Eq a => Map.Map String a -> a -> Parser String
-mapValueBetweenSpaces m v = (spaces *> string (lookupR v m) <* spaces)
+mapValueBetweenSpaces m v = try (spaces *> string (lookupR v m) <* spaces)
 
 oneOfKeys :: Map.Map String a -> Parser a
 oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
@@ -39,7 +39,7 @@ binOp op = Infix (BinaryExpression op <$ (mapValueBetweenSpaces binaryOperations
 operations = [[unOp Not, unOp Neg],
               [binOp Mul, binOp Div],
               [binOp Sum, binOp Sub],
-              [binOp L, binOp G, binOp GE, binOp LE],
+              [binOp GE, binOp LE, binOp L, binOp G],
               [binOp Eq, binOp NotE],
               [binOp And],
               [binOp Or]]
