@@ -66,14 +66,18 @@ translateBinaryOperation Boolean Or =
     , IFICMPE 2
     , POP
     , LOAD_i 1 ]
-translateBinaryOperation (StdType (Just Int)) L     = intBoolOpCode IFICMPL
-translateBinaryOperation (StdType (Just Int)) LE    = intBoolOpCode IFICMPLE
-translateBinaryOperation (StdType (Just Int)) G     = intBoolOpCode IFICMPG
-translateBinaryOperation (StdType (Just Int)) GE    = intBoolOpCode IFICMPGE
-translateBinaryOperation (StdType (Just Double)) L  = doubleBoolOpCode IFICMPL
-translateBinaryOperation (StdType (Just Double)) LE = doubleBoolOpCode IFICMPLE
-translateBinaryOperation (StdType (Just Double)) G  = doubleBoolOpCode IFICMPG
-translateBinaryOperation (StdType (Just Double)) GE = doubleBoolOpCode IFICMPGE
+translateBinaryOperation (StdType (Just Int)) L       = intBoolOpCode IFICMPL
+translateBinaryOperation (StdType (Just Int)) LE      = intBoolOpCode IFICMPLE
+translateBinaryOperation (StdType (Just Int)) G       = intBoolOpCode IFICMPG
+translateBinaryOperation (StdType (Just Int)) GE      = intBoolOpCode IFICMPGE
+translateBinaryOperation (StdType (Just Int)) Eq      = intBoolOpCode IFICMPE
+translateBinaryOperation (StdType (Just Int)) NotE    = intBoolOpCode IFICMPNE
+translateBinaryOperation (StdType (Just Double)) L    = doubleBoolOpCode IFICMPL
+translateBinaryOperation (StdType (Just Double)) LE   = doubleBoolOpCode IFICMPLE
+translateBinaryOperation (StdType (Just Double)) G    = doubleBoolOpCode IFICMPG
+translateBinaryOperation (StdType (Just Double)) GE   = doubleBoolOpCode IFICMPGE
+translateBinaryOperation (StdType (Just Double)) Eq   = doubleBoolOpCode IFICMPE
+translateBinaryOperation (StdType (Just Double)) NotE = doubleBoolOpCode IFICMPNE
 translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
