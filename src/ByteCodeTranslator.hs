@@ -42,6 +42,14 @@ translateUnaryOperation Boolean Not =
 translateUnaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
+intBoolOpCode :: (Int -> BCCommand) -> [BCCommand]
+intBoolOpCode c = c 2 : [LOAD_i 0, JA 1, LOAD_i 1]
+
+
+doubleBoolOpCode :: (Int -> BCCommand) -> [BCCommand]
+doubleBoolOpCode c = [DCMP, LOAD_i 0, SWAP] ++ intBoolOpCode c
+
+
 translateBinaryOperation :: ExType -> BinaryOperation -> [BCCommand]
 translateBinaryOperation (StdType (Just Int))    Sum = [IADD]
 translateBinaryOperation (StdType (Just Double)) Sum = [DADD]
@@ -58,12 +66,14 @@ translateBinaryOperation Boolean Or =
     , IFICMPE 2
     , POP
     , LOAD_i 1 ]
-translateBinaryOperation (StdType (Just Int)) L = 
-    [ IFICMPL 2
-    , LOAD_i 0
-    , JA 1
-    , LOAD_i 1 ]
-    
+translateBinaryOperation (StdType (Just Int)) L     = intBoolOpCode IFICMPL
+translateBinaryOperation (StdType (Just Int)) LE    = intBoolOpCode IFICMPLE
+translateBinaryOperation (StdType (Just Int)) G     = intBoolOpCode IFICMPG
+translateBinaryOperation (StdType (Just Int)) GE    = intBoolOpCode IFICMPGE
+translateBinaryOperation (StdType (Just Double)) L  = doubleBoolOpCode IFICMPL
+translateBinaryOperation (StdType (Just Double)) LE = doubleBoolOpCode IFICMPLE
+translateBinaryOperation (StdType (Just Double)) G  = doubleBoolOpCode IFICMPG
+translateBinaryOperation (StdType (Just Double)) GE = doubleBoolOpCode IFICMPGE
 translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
