@@ -1,0 +1,9 @@
+void main() {
+    printi(div(3, 2))
+}
+
+int div(int a, int b) {
+    return dtoi(a / b)
+}
+
+

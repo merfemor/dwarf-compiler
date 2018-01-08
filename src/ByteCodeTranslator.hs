@@ -1,11 +1,9 @@
 module ByteCodeTranslator(toByteCode) where
 
-import Syntax.Abstract ( Type, Type(Int), Type(Double), Type(String)
-                       , UnaryOperation, UnaryOperation(Neg), UnaryOperation(Not)
-                       , BinaryOperation, BinaryOperation(And), BinaryOperation(Or)
-                       , BinaryOperation(Eq), BinaryOperation(G), BinaryOperation(L), BinaryOperation(GE), BinaryOperation(LE), BinaryOperation(NotE)
-                       , BinaryOperation(Sum), BinaryOperation(Sub), BinaryOperation(Mul), BinaryOperation(Div)
-                       , ExType, ExType(StdType), ExType(Boolean)
+import Syntax.Abstract ( Type(..)
+                       , UnaryOperation(..)
+                       , BinaryOperation(..)
+                       , ExType(..)
                        , varType)
 import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
@@ -50,35 +48,34 @@ doubleBoolOpCode :: (Int -> BCCommand) -> [BCCommand]
 doubleBoolOpCode c = [DCMP, LOAD_i 0, SWAP] ++ intBoolOpCode c
 
 
-translateBinaryOperation :: ExType -> BinaryOperation -> [BCCommand]
-translateBinaryOperation (StdType (Just Int))    Sum = [IADD]
-translateBinaryOperation (StdType (Just Double)) Sum = [DADD]
-translateBinaryOperation (StdType (Just Int))    Sub = [ISUB]
-translateBinaryOperation (StdType (Just Double)) Sub = [DSUB]
-translateBinaryOperation (StdType (Just Int))    Mul = [IMUL]
-translateBinaryOperation (StdType (Just Double)) Mul = [DMUL]
-translateBinaryOperation (StdType (Just Int))    Div = [IDIV]
-translateBinaryOperation (StdType (Just Double)) Div = [DDIV]
-translateBinaryOperation Boolean And = [IMUL]
-translateBinaryOperation Boolean Or = 
-    [ IADD
-    , LOAD_i 0
-    , IFICMPE 2
-    , POP
-    , LOAD_i 1 ]
-translateBinaryOperation (StdType (Just Int)) L       = intBoolOpCode IFICMPL
-translateBinaryOperation (StdType (Just Int)) LE      = intBoolOpCode IFICMPLE
-translateBinaryOperation (StdType (Just Int)) G       = intBoolOpCode IFICMPG
-translateBinaryOperation (StdType (Just Int)) GE      = intBoolOpCode IFICMPGE
-translateBinaryOperation (StdType (Just Int)) Eq      = intBoolOpCode IFICMPE
-translateBinaryOperation (StdType (Just Int)) NotE    = intBoolOpCode IFICMPNE
-translateBinaryOperation (StdType (Just Double)) L    = doubleBoolOpCode IFICMPL
-translateBinaryOperation (StdType (Just Double)) LE   = doubleBoolOpCode IFICMPLE
-translateBinaryOperation (StdType (Just Double)) G    = doubleBoolOpCode IFICMPG
-translateBinaryOperation (StdType (Just Double)) GE   = doubleBoolOpCode IFICMPGE
-translateBinaryOperation (StdType (Just Double)) Eq   = doubleBoolOpCode IFICMPE
-translateBinaryOperation (StdType (Just Double)) NotE = doubleBoolOpCode IFICMPNE
-translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
+translateNumBinOp :: Type -> BinaryOperation -> [BCCommand]
+translateNumBinOp Int    Sum = [IADD]
+translateNumBinOp Double Sum = [DADD]
+translateNumBinOp Int    Sub = [ISUB]
+translateNumBinOp Double Sub = [DSUB]
+translateNumBinOp Int    Mul = [IMUL]
+translateNumBinOp Double Mul = [DMUL]
+translateNumBinOp Int    Div = [IDIV]
+translateNumBinOp Double Div = [DDIV]
+translateNumBinOp Int L       = intBoolOpCode IFICMPL
+translateNumBinOp Int LE      = intBoolOpCode IFICMPLE
+translateNumBinOp Int G       = intBoolOpCode IFICMPG
+translateNumBinOp Int GE      = intBoolOpCode IFICMPGE
+translateNumBinOp Int Eq      = intBoolOpCode IFICMPE
+translateNumBinOp Int NotE    = intBoolOpCode IFICMPNE
+translateNumBinOp Double L    = doubleBoolOpCode IFICMPL
+translateNumBinOp Double LE   = doubleBoolOpCode IFICMPLE
+translateNumBinOp Double G    = doubleBoolOpCode IFICMPG
+translateNumBinOp Double GE   = doubleBoolOpCode IFICMPGE
+translateNumBinOp Double Eq   = doubleBoolOpCode IFICMPE
+translateNumBinOp Double NotE = doubleBoolOpCode IFICMPNE
+translateNumBinOp t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
+
+
+translateBoolBinOp :: BinaryOperation -> [BCCommand]
+translateBoolBinOp And = [IMUL]
+translateBoolBinOp Or  = [ IADD, LOAD_i 0, IFICMPE 1, LOAD_i 1 ]
+translateBoolBinOp c   = error $ show c ++ " is not an operation under boolean arguments"
 
 
 translateFunctionCall :: [T.Function] -> Id -> [Expression] -> [BCCommand]
@@ -100,15 +97,26 @@ translateExpression fs (VCall vid) = [LOADCTXVAR (funcId vid) (translateVarId fs
 translateExpression fs (UnaryExpression op e) = 
     translateExpression fs e ++ 
     translateUnaryOperation (expressionType fs e) op 
-translateExpression fs (BinaryExpression op ex1 ex2) = 
-    let t1 = expressionType fs ex1
+translateExpression fs (BinaryExpression op ex1 ex2) =
+    let ex1' = translateExpression fs ex1
+        ex2' = translateExpression fs ex2
+        t1 = expressionType fs ex1
         t2 = expressionType fs ex2
-        t  = if t1 == t2 then t1 else StdType $ Just $ Double in
-    translateExpression fs ex2 ++ 
-    (if t1 == StdType (Just Double) && t2 == StdType (Just Int) then [I2D] else []) ++
-    translateExpression fs ex1 ++ 
-    (if t1 == StdType (Just Int) && t2 == StdType (Just Double) then [I2D] else []) ++
-    translateBinaryOperation t op
+    in case op of
+        Or  -> ex2' ++ ex1' ++ translateBoolBinOp op
+        And -> ex2' ++ ex1' ++ translateBoolBinOp op
+        Div -> ex2' ++ 
+               (if t2 == StdType (Just Int) then [I2D] else []) ++ 
+               ex1' ++ 
+               (if t1 == StdType (Just Int) then [I2D] else []) ++ 
+               translateNumBinOp Double Div
+        _ -> let StdType (Just t1') = t1
+                 StdType (Just t2') = t2 in 
+                 ex2' ++ 
+                 (if t2' == Int && t1' == Double then [I2D] else []) ++
+                 ex1' ++
+                 (if t1' == Int && t2' == Double then [I2D] else []) ++
+                 translateNumBinOp (if t1' == t2' then t1' else Double) op
 
     
 getArgumentConverts :: [T.Function] -> Id -> [Expression] -> [[BCCommand]]

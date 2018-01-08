@@ -1,13 +1,12 @@
 module TypeChecker(checkFunctions, expressionType) where
 
 import Syntax.Translatable
-import Syntax.Abstract ( Type(Int)
-                       , Type(Double)
-                       , Type(String)
+import Syntax.Abstract ( Type(..)
                        , varType
                        , isUnaryBoolean
                        , isBinaryBoolean
-                       , ExType, ExType(StdType), ExType(Boolean))
+                       , BinaryOperation(Div)
+                       , ExType(..))
 import Syntax.Error
 import Data.List(elemIndex)
 import Data.Maybe(fromJust)
@@ -34,6 +33,7 @@ expressionType fs (UnaryExpression op ex)
     | isUnaryBoolean op = Boolean 
     | otherwise         = expressionType fs ex
 
+expressionType fs (BinaryExpression Div ex1 ex2) = StdType $ Just Double
 expressionType fs (BinaryExpression op ex1 ex2)
     | isBinaryBoolean op = Boolean
     | otherwise          = 
