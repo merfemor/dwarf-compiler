@@ -74,5 +74,5 @@ putProgram (sp,fp) = do
     putWord16le 0xBABA
     putWord64le 1 -- version     
     putConstPool sp
-    putWord64le . fromIntegral . length $ fs
-    foldl1 (>>) (map putFunc fs)
+    putWord64le . fromIntegral . length $ fp
+    foldl1 (>>) (map putFunc fp)

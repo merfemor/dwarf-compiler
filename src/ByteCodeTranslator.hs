@@ -11,7 +11,7 @@ import Syntax.Translatable as T
 import Syntax.ByteCode     as BC
 import TypeChecker(expressionType)
 import Data.Maybe(fromJust)
-import Data.List(elemIndex)
+import Data.List(elemIndex, findIndex)
 import InlinedStdLibrary
 
 -- TODO: place main to 0 idx
@@ -123,6 +123,22 @@ setStandardFunBodies :: [BC.Function] -> [BC.Function]
 setStandardFunBodies sfs = map replaceBody (zip [0..] sfs) where
     replaceBody (i, (BC.Function n l as _)) = BC.Function n l as (bodiesOfStandardFunctions !! i)
 
+    
+replaceMainAnd0 :: ByteCodeProgramTree -> [BC.Function]
+replaceMainAnd0 (sp,fp) = 
+    let mainFId = fromJust $ findIndex (\f -> sp !! (BC.funcName f) == "main") fp
+        headFun = head fp
+        mainFun = fp !! mainFId
+        fp' = update fp headFun mainFId
+        fp'' = mainFun : tail fp' 
+        replCom f t (CALL fun) 
+            | fun == t = CALL f
+            | fun == f = CALL t
+        replCom _ _ c = c
+        replaceFcallId f t (BC.Function n l a cs) = BC.Function n l a (map (replCom f t) cs)
+    in map (replaceFcallId mainFId 0) fp''
+
+
 toByteCode :: TranslatableProgramTree -> ByteCodeProgramTree
 toByteCode tpt@(_,fp) = 
     let sp' = addFunctionNamesToStringPool tpt
@@ -131,4 +147,5 @@ toByteCode tpt@(_,fp) =
         ufs = drop (length standardFunctions) fp'
         sfs' = setStandardFunBodies sfs
         fp'' = sfs' ++ ufs
-    in (sp', fp'')
+        fp''' = replaceMainAnd0 (sp',fp'')
+    in (sp', fp''')
