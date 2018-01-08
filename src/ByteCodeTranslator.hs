@@ -82,7 +82,16 @@ translateExpression fs (BinaryExpression op ex1 ex2) =
     (if t1 == StdType (Just Double) && t2 == StdType (Just Int) then [I2D] else []) ++
     translateBinaryOperation t op
 
+    
+getArgumentConverts :: [T.Function] -> Id -> [Expression] -> [[BCCommand]]
+getArgumentConverts fs fid es =
+    let ext = map varType (T.arguments (fs !! fid))
+        it = map (\(StdType (Just t)) -> t) (map (expressionType fs) es)
+        cvrt (Double,Int) = [I2D]
+        cvrt _            = []
+    in map cvrt (zip ext it)
 
+    
 translateStatement :: T.Function -> [T.Function] -> Statement -> [BCCommand]
 translateStatement _ _ (Return Nothing) = [RETURN]
 translateStatement f fs (Return (Just e)) =
@@ -91,7 +100,11 @@ translateStatement f fs (Return (Just e)) =
     (if returnType f == Just Double && t == Just Int then [I2D] else []) ++
     [RETURN]
 translateStatement _ fs (FuncCall i es) = 
-    concatMap (translateExpression fs) es ++ -- convert types
+    let cvrts = getArgumentConverts fs i es 
+        es' = map (translateExpression fs) es
+        es'' = map (uncurry (++)) (zip es' cvrts)
+    in
+    concat es'' ++
     [CALL i]
 
 translateStatement _ fs (VarAssign vid e) = 
