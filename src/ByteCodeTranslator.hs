@@ -62,12 +62,21 @@ translateBinaryOperation (StdType (Just Int)) L =
 translateBinaryOperation t o = error $ "can't generate bytecode of operation " ++ show o ++ " for type " ++ show t
 
 
+translateFunctionCall :: [T.Function] -> Id -> [Expression] -> [BCCommand]
+translateFunctionCall fs i es = 
+    let cvrts = getArgumentConverts fs i es 
+        es' = map (translateExpression fs) es
+        es'' = map (uncurry (++)) (zip es' cvrts)
+    in
+    concat (reverse es'') ++
+    [CALL i]
+
 
 translateExpression :: [T.Function] -> Expression -> [BCCommand]
 translateExpression _ (SLit i) = [LOADS i]
 translateExpression _ (ILit i) = [LOAD_i i]
 translateExpression _ (DLit i) = [LOAD_d i]
-translateExpression fs (FCall i exs) = (concatMap (translateExpression fs) exs) ++ [CALL i]
+translateExpression fs (FCall i exs) = translateFunctionCall fs i exs 
 translateExpression fs (VCall vid) = [LOADCTXVAR (funcId vid) (translateVarId fs vid)]
 translateExpression fs (UnaryExpression op e) = 
     translateExpression fs e ++ 
@@ -76,10 +85,10 @@ translateExpression fs (BinaryExpression op ex1 ex2) =
     let t1 = expressionType fs ex1
         t2 = expressionType fs ex2
         t  = if t1 == t2 then t1 else StdType $ Just $ Double in
-    translateExpression fs ex1 ++ 
-    (if t1 == StdType (Just Int) && t2 == StdType (Just Double) then [I2D] else []) ++
     translateExpression fs ex2 ++ 
     (if t1 == StdType (Just Double) && t2 == StdType (Just Int) then [I2D] else []) ++
+    translateExpression fs ex1 ++ 
+    (if t1 == StdType (Just Int) && t2 == StdType (Just Double) then [I2D] else []) ++
     translateBinaryOperation t op
 
     
@@ -99,14 +108,7 @@ translateStatement f fs (Return (Just e)) =
     translateExpression fs e ++ 
     (if returnType f == Just Double && t == Just Int then [I2D] else []) ++
     [RETURN]
-translateStatement _ fs (FuncCall i es) = 
-    let cvrts = getArgumentConverts fs i es 
-        es' = map (translateExpression fs) es
-        es'' = map (uncurry (++)) (zip es' cvrts)
-    in
-    concat es'' ++
-    [CALL i]
-
+translateStatement _ fs (FuncCall i es) = translateFunctionCall fs i es
 translateStatement _ fs (VarAssign vid e) = 
     translateExpression fs e ++ 
     [STORECTXVAR (funcId vid) (translateVarId fs vid)] -- convert types
