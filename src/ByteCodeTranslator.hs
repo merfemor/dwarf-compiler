@@ -15,8 +15,14 @@ import Data.List(elemIndex, findIndex)
 import InlinedStdLibrary
 
 
+getFunctionName :: [T.Function] -> T.Function -> String
+getFunctionName fs f = case outerFunctionId f of
+                                  Nothing  -> T.funcName f
+                                  Just oid -> getFunctionName fs (fs !! oid) ++ "." ++ T.funcName f
+        
+
 addFunctionNamesToStringPool :: TranslatableProgramTree -> [String]
-addFunctionNamesToStringPool (sp,fp) = sp ++ map T.funcName fp
+addFunctionNamesToStringPool (sp,fp) = sp ++ map (getFunctionName fp) fp
 
 
 translateVarId :: [T.Function] -> VariableId -> Id
@@ -84,10 +90,9 @@ translateStatement f fs (Return (Just e)) =
     translateExpression fs e ++ 
     (if returnType f == Just Double && t == Just Int then [I2D] else []) ++
     [RETURN]
-translateStatement f fs (FuncCall i es) = 
+translateStatement _ fs (FuncCall i es) = 
     concatMap (translateExpression fs) es ++ -- convert types
-    [CALL i] 
-        -- ++ if returnType f == Nothing then [] else [POP] need that?
+    [CALL i]
 
 translateStatement _ fs (VarAssign vid e) = 
     translateExpression fs e ++ 
@@ -110,8 +115,9 @@ translateStatement fid fs (IfElse e iss ess) =
 
 translateFunction :: TranslatableProgramTree -> T.Function -> BC.Function
 translateFunction (sp,fp) f@(T.Function _ fn lvs args _ ss) = 
-    let fnid = fromJust $ elemIndex fn sp
-        ss'  = concatMap (translateStatement f fp) ss
+    let ss'  = concatMap (translateStatement f fp) ss
+        fn'  = getFunctionName fp f
+        fnid = fromJust $ elemIndex fn' sp
         returnToStop RETURN = STOP
         returnToStop s = s
         ss'' = if fn == "main" then map returnToStop ss' else ss'
@@ -136,7 +142,7 @@ replaceMainAnd0 (sp,fp) =
         replCom _ _ c = c
         replaceFcallId f t (BC.Function n l a cs) = BC.Function n l a (map (replCom f t) cs)
     in map (replaceFcallId mainFId 0) fp''
-
+    
 
 toByteCode :: TranslatableProgramTree -> ByteCodeProgramTree
 toByteCode tpt@(_,fp) = 
