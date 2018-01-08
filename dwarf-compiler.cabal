@@ -57,7 +57,13 @@ executable dwsc
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.9 && <4.11, parsec, containers, binary, bytestring, filepath
+  build-depends:       base >=4.9 && <4.11, 
+                       parsec, 
+                       containers, 
+                       binary, 
+                       bytestring, 
+                       filepath, 
+                       data-binary-ieee754
   
   -- Directories containing source files.
   hs-source-dirs:      src

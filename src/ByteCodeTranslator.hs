@@ -139,6 +139,12 @@ replaceMainAnd0 (sp,fp) =
         replCom f t (CALL fun) 
             | fun == t = CALL f
             | fun == f = CALL t
+        replCom f t (STORECTXVAR fun vid) 
+            | fun == t = STORECTXVAR f vid
+            | fun == f = STORECTXVAR t vid
+        replCom f t (LOADCTXVAR fun vid) 
+            | fun == t = LOADCTXVAR f vid
+            | fun == f = LOADCTXVAR t vid
         replCom _ _ c = c
         replaceFcallId f t (BC.Function n l a cs) = BC.Function n l a (map (replCom f t) cs)
     in map (replaceFcallId mainFId 0) fp''

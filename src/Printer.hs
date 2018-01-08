@@ -1,20 +1,28 @@
-module Printer(putProgram) where
+module Printer(putProgram, preTransform) where
 
 import Syntax.ByteCode
-import Data.Binary.Put
-import Data.Binary
 import Syntax.Abstract (Type, Type(Int), Type(Double), Type(String))
-import qualified Data.ByteString.Lazy as L
+import Data.Binary.Put
+import Data.Binary.IEEE754 (putFloat64le)
 import qualified Data.ByteString as BS
 
 
 transformJumpOffsets :: Function -> Function
-transformJumpOffsets = id
+transformJumpOffsets = id -- TODO: implement transformJumpOffsets
 
+
+transformFIds :: [Function] -> Function -> Function
+transformFIds fs (Function n l a cs) = 
+    let trc (CALL i) = CALL $ funcName (fs !! i)
+        trc (STORECTXVAR i vid) = STORECTXVAR (funcName (fs !! i)) vid
+        trc (LOADCTXVAR  i vid) = LOADCTXVAR  (funcName (fs !! i)) vid
+        trc c = c
+    in Function n l a (map trc cs)
+        
 
 putCommand :: BCCommand -> Put
 putCommand bcc = case bcc of
-    LOAD_d i   -> putWord8 1 >> putByteString (BS.concat (L.toChunks (encode i)))
+    LOAD_d i   -> putWord8 1 >> putFloat64le i
     LOAD_i i   -> putWord8 1 >> putWord64le (fromIntegral i)
     LOADS i    -> putWord8 2 >> putWord64le (fromIntegral i)
     DADD       -> putWord8 3
@@ -81,12 +89,16 @@ putFunc (Function n l a b) = do
     putWord64le $ fromIntegral $ sum $ map commandSizeInBytes b -- byte code size
     foldl1 (>>) (map putCommand b)
 
+    
+preTransform :: ByteCodeProgramTree -> ByteCodeProgramTree
+preTransform (sp,fp) = let fp' = map transformJumpOffsets fp  in 
+                           (sp, map (transformFIds fp') fp')
+
 
 putProgram :: ByteCodeProgramTree -> Put
-putProgram (sp,fp) = 
-    let fp' = map transformJumpOffsets fp in do
+putProgram (sp,fp) = do
     putWord16le 0xBABA
     putWord64le 1 -- version     
     putConstPool sp
-    putWord64le . fromIntegral . length $ fp'
-    foldl1 (>>) (map putFunc fp')
+    putWord64le . fromIntegral . length $ fp
+    foldl1 (>>) (map putFunc fp)
