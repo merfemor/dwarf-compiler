@@ -2,6 +2,9 @@
 compiler of imperative language to dwarf-vm bytecode
 
 # Build
+
+**Tested on Debian**
+
 You need `cabal` package to build dwarf-compiler
 
 Clone project
@@ -30,3 +33,10 @@ Now you can run dwarf-compiler from anywhere (assuming that you have `.cabal/bin
 ```
 dwsc <source_file.dws>
 ```
+
+## Problems on Arch
+
+ghc provides errors on Arch-based distros. There is still no 100 percent workable solution for this problem, but you can try:
+
+- add `-dynamic` flag in `ghc-options` in `.cabal` file
+- if this doesn't help, you can try to find a solution on the [arch wiki manual page](https://wiki.archlinux.org/index.php/haskell) 
