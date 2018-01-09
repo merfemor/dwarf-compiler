@@ -1,0 +1,13 @@
+int factorial (int n) {
+    int f = 1
+    int i = 1
+    while (n > i) {
+        f = f * i
+        i = i + 1
+    }
+    return f
+}
+
+void main() {
+	printi(factorial(10))
+}

@@ -1,1 +1,1 @@
-find . -iname '*.dws' -exec dwsc {} \;
+find . -iname '*.dwc' -exec vm   {} \;
