@@ -106,8 +106,15 @@ function = do
     whiteSpace
     n <- identifier
     args <- parens $ commaSep $ Var <$> builtInType <* whiteSpace <*> identifier
-    fb <- braces statementList
-    return (Function t n args fb) <?> "function definition"
+    fb <- braces statementList 
+    let ret = return (Function t n args fb) <?> "function definition" in
+        if t /= Nothing then 
+            case last fb of 
+                Return Nothing  -> fail $ "expected \"return <expression>\" at the end of non-void " ++ n ++ " function"
+                Return (Just _) -> ret
+                _               -> fail $ "expected \"return <expression>\" at the end of non-void " ++ n ++ " function"
+        else ret
+    
 
 abstractProgramTree :: Parser AbstractProgramTree
 abstractProgramTree = whiteSpace >> many1 function
