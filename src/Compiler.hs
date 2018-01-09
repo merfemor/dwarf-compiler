@@ -22,7 +22,7 @@ main = do
             case parse abstractProgramTree file content of
                 Left e    -> putStrLn $ show e
                 Right res -> do
-                    putStrLn $ show res ++ "\n\n"
+                    --putStrLn $ show res ++ "\n\n"
                     case abstractToTranslatable res of
                         Left e     -> putStrLn $ show e
                         Right trtd ->
@@ -31,6 +31,6 @@ main = do
                                 bstr = putProgram bc' 
                                 ofile = replaceExtension file ".dwc"
                             in do
-                            putStrLn $ show trtd ++ "\n\n" ++ show bc'
+                            --putStrLn $ show trtd ++ "\n\n" ++ show bc'
                             BS.writeFile ofile (runPut bstr)
                             

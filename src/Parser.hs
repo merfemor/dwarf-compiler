@@ -13,6 +13,7 @@ lookupR v = fst . head . Map.assocs . (Map.filter (==v))
 
 lexer         = Token.makeTokenParser languageDef
 
+whiteSpace    = Token.whiteSpace    lexer
 identifier    = Token.identifier    lexer -- parses an identifier
 parens        = Token.parens        lexer -- parses surrounding parenthesis:
 braces        = Token.braces        lexer
@@ -24,13 +25,13 @@ int :: Parser Int
 int = fromInteger <$> Token.integer lexer
 
 mapValueBetweenSpaces :: Eq a => Map.Map String a -> a -> Parser String
-mapValueBetweenSpaces m v = try (spaces *> string (lookupR v m) <* spaces)
+mapValueBetweenSpaces m v = try (whiteSpace *> string (lookupR v m) <* whiteSpace)
 
 oneOfKeys :: Map.Map String a -> Parser a
 oneOfKeys m = ((Map.!) m) <$> (choice . map string . Map.keys $ m)
 
 functionCall :: Parser FunctionCall
-functionCall = FunctionCall <$> identifier <*> parens sepExpressions
+functionCall = FunctionCall <$> identifier <*> parens sepExpressions <?> "function call"
 
 unOp op = Prefix $ UnaryExpression op <$ (mapValueBetweenSpaces unaryOperations op)
 
@@ -59,42 +60,42 @@ sepExpressions :: Parser [Expression]
 sepExpressions = commaSep expression
 
 builtInType :: Parser Type
-builtInType = oneOfKeys builtInTypes
+builtInType = oneOfKeys builtInTypes <?> "built-in type (int, double or string)"
 
 varDefinition :: Parser Var
-varDefinition = Var <$> builtInType <* spaces <*> identifier
+varDefinition = Var <$> builtInType <* whiteSpace <*> identifier <?> "variable definition"
 
 varAssignment :: Parser Statement
-varAssignment = VarAssign <$> identifier <* char '=' <* spaces <*> expression
+varAssignment = VarAssign <$> identifier <* char '=' <* whiteSpace <*> expression <?> "variable assignment"
 
 ifElse :: Parser Statement
 ifElse = do
     _ <- string "if"
-    spaces
+    whiteSpace
     e <- parens expression
     sl <- braces statementList
-    esl <- option [] (string "else" *> spaces *> braces statementList)
-    return $ IfElse e sl esl
+    esl <- option [] (string "else" *> whiteSpace *> braces statementList)
+    return (IfElse e sl esl) <?> "if-else block"
 
 whileLoop :: Parser Statement
 whileLoop = do
     _ <- string "while"
-    spaces
+    whiteSpace
     e <- parens expression
     sl <- braces statementList
-    return $ WhileLoop e sl
+    return (WhileLoop e sl) <?> "while loop block"
 
 statement :: Parser Statement
 statement = try varAssignment
         <|> try (FuncDef <$> function)
-        <|> Return <$> (string "return" *> spaces *> optionMaybe expression)
+        <|> (Return <$> (string "return" *> whiteSpace *> optionMaybe expression) <?> "return statement")
         <|> try ifElse
         <|> whileLoop
-        <|> VarDef <$> varDefinition <* char '=' <* spaces <*> expression
+        <|> try (VarDef <$> varDefinition <* char '=' <* whiteSpace <*> expression)
         <|> FuncCall <$> functionCall
 
 statementList :: Parser [Statement]
-statementList = endBy1 statement spaces
+statementList = endBy1 statement whiteSpace
 
 voidableType :: Parser (Maybe Type)
 voidableType = Just <$> builtInType <|> Nothing <$ string "void"
@@ -102,11 +103,11 @@ voidableType = Just <$> builtInType <|> Nothing <$ string "void"
 function :: Parser Function
 function = do
     t <- voidableType
-    spaces
+    whiteSpace
     n <- identifier
-    args <- parens $ commaSep $ Var <$> builtInType <* spaces <*> identifier
+    args <- parens $ commaSep $ Var <$> builtInType <* whiteSpace <*> identifier
     fb <- braces statementList
-    return $ Function t n args fb
+    return (Function t n args fb) <?> "function definition"
 
 abstractProgramTree :: Parser AbstractProgramTree
-abstractProgramTree = spaces >> many1 function
+abstractProgramTree = whiteSpace >> many1 function
