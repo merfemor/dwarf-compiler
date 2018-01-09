@@ -5,7 +5,17 @@ compiler of imperative language to dwarf-vm bytecode
 
 **Tested on Debian**
 
-You need `cabal` package to build dwarf-compiler
+You need `cabal-install`, `git`, `ghc` packages to build dwarf-compiler
+
+Install the following packages if you don't have them:
+```
+cabal install parsec
+cabal install data-binary-ieee754
+```
+For Arch instead of install `data-binary-ieee754` run:
+```
+yaourt -S haskell-data-binary-ieee754
+```
 
 Clone project
 ```
@@ -16,6 +26,8 @@ In the project directory, enter following commands to configure and build the pr
 ```
 cabal build
 ```
+If you have errors on Arch-based distros, you can try add `-dynamic` flag in `ghc-options` in `.cabal` file
+
 If build succeeds, dwarf-compiler will be in the `./dist/build/dwsc` directory. You can run it:
 ```
 ./dist/build/dwsc/dwsc <source_file.dws>
@@ -33,10 +45,3 @@ Now you can run dwarf-compiler from anywhere (assuming that you have `.cabal/bin
 ```
 dwsc <source_file.dws>
 ```
-
-## Problems on Arch
-
-ghc provides errors on Arch-based distros. There is still no 100 percent workable solution for this problem, but you can try:
-
-- add `-dynamic` flag in `ghc-options` in `.cabal` file
-- if this doesn't help, you can try to find a solution on the [arch wiki manual page](https://wiki.archlinux.org/index.php/haskell) 
