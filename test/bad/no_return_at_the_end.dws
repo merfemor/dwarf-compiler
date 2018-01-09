@@ -1,0 +1,7 @@
+int f() {
+    int d = 0
+}
+
+void main() {
+    printi(f())
+}
