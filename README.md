@@ -1,9 +1,9 @@
 # dwarf-compiler
-compiler of imperative language to dwarf-vm bytecode
+compiler of imperative language to [dwarf-vm](https://github.com/sayon/dwarf-vm) bytecode
 
 # Build
 
-**Tested on Debian**
+**Tested on Debian and Arch**
 
 You need `cabal-install`, `git`, `ghc` packages to build dwarf-compiler
 
@@ -44,4 +44,12 @@ cabal install
 Now you can run dwarf-compiler from anywhere (assuming that you have `.cabal/bin` in your PATH):
 ```
 dwsc <source_file.dws>
+```
+
+# Run
+
+Before running compiled .dwc files, you need to install the virtual machine ([dwarf-vm](https://github.com/sayon/dwarf-vm)).
+After you install it, to run the program, just type
+```
+vm <source_file.dwc>
 ```
